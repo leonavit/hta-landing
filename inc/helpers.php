@@ -392,6 +392,53 @@ function hta_page_url(string $slug): string
 }
 
 /**
+ * Official Israeli localities (Population & Immigration Authority via data.gov.il), cached.
+ *
+ * @return list<string>
+ */
+function hta_israel_cities(): array
+{
+    static $cities = null;
+    if (null !== $cities) {
+        return $cities;
+    }
+
+    $path = HTA_DIR . '/assets/data/israel-cities.json';
+    if (! is_readable($path)) {
+        $cities = [];
+        return $cities;
+    }
+
+    $decoded = json_decode((string) file_get_contents($path), true);
+    $list    = [];
+    if (is_array($decoded)) {
+        $raw = isset($decoded['cities']) && is_array($decoded['cities']) ? $decoded['cities'] : $decoded;
+        foreach ($raw as $name) {
+            if (! is_string($name)) {
+                continue;
+            }
+            $name = trim(preg_replace('/\s+/u', ' ', $name) ?? '');
+            if ('' !== $name) {
+                $list[] = $name;
+            }
+        }
+    }
+
+    $cities = array_values(array_unique($list));
+    return $cities;
+}
+
+function hta_is_valid_israel_city(string $name): bool
+{
+    $name = trim(preg_replace('/\s+/u', ' ', $name) ?? '');
+    if ('' === $name) {
+        return false;
+    }
+
+    return in_array($name, hta_israel_cities(), true);
+}
+
+/**
  * Animated hamburger / close icon (Uiverse tall-swan-6).
  */
 function hta_render_hamburger_icon(string $uid = 'nav'): void

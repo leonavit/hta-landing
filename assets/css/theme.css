@@ -1816,11 +1816,107 @@ section h2 {
     color: #45cee8 !important;
 }
 
-#hta-submit-form input:not([type='hidden']),
+#hta-submit-form input:not([type='hidden']):not([type='checkbox']),
 #hta-submit-form textarea,
 .hta-events-filters input,
 .hta-events-filters select {
     border-color: #47d3ed !important;
+}
+
+.hta-submit-agree {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.hta-submit-agree input[type='checkbox'] {
+    flex-shrink: 0;
+    width: 1.1rem;
+    height: 1.1rem;
+    margin-top: 0.2rem;
+    accent-color: var(--hta-primary-1, #22d3ee);
+    cursor: pointer;
+}
+
+.hta-submit-agree label {
+    color: #cbd5e1 !important;
+    font-size: 0.875rem;
+    font-weight: 300;
+    line-height: 1.55;
+    cursor: pointer;
+}
+
+.hta-submit-agree a {
+    color: var(--hta-primary-1, #22d3ee);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.hta-submit-agree a:hover {
+    color: #fff;
+}
+
+.hta-city-field {
+    position: relative;
+}
+
+.hta-city-combobox {
+    position: relative;
+}
+
+.hta-city-listbox {
+    position: absolute;
+    z-index: 40;
+    top: calc(100% + 4px);
+    right: 0;
+    left: 0;
+    margin: 0;
+    padding: 0.35rem 0;
+    list-style: none;
+    max-height: 14rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    direction: rtl;
+    text-align: right;
+    background: #020617;
+    border: 1px solid #47d3ed;
+    box-shadow: 0 12px 28px rgb(2 6 23 / 0.55);
+}
+
+.hta-city-option {
+    display: block;
+    width: 100%;
+    padding: 0.65rem 1rem;
+    color: #e2e8f0;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    cursor: pointer;
+}
+
+.hta-city-option:hover,
+.hta-city-option.is-active,
+.hta-city-option[aria-selected='true'] {
+    background: rgb(34 211 238 / 0.12);
+    color: #fff;
+}
+
+.hta-city-empty {
+    padding: 0.75rem 1rem;
+    color: #94a3b8;
+    font-size: 0.875rem;
+}
+
+.hta-city-hint {
+    margin: 0.4rem 0 0;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 300;
+    line-height: 1.4;
+}
+
+#hta-submit-form #event_location[aria-invalid='true'] {
+    border-color: #fb7185 !important;
 }
 
 .hta-hp {

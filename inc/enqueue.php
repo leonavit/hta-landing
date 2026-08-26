@@ -77,20 +77,31 @@ function hta_enqueue_assets(): void
     );
 
     wp_enqueue_script(
+        'hta-city-autocomplete',
+        HTA_URI . '/assets/js/city-autocomplete.js',
+        [],
+        HTA_VERSION,
+        true
+    );
+
+    wp_enqueue_script(
         'hta-theme',
         HTA_URI . '/assets/js/theme.js',
-        ['gsap', 'gsap-scrolltrigger', 'gsap-splittext', 'swiper'],
+        ['gsap', 'gsap-scrolltrigger', 'gsap-splittext', 'swiper', 'hta-city-autocomplete'],
         HTA_VERSION,
         true
     );
 
     wp_localize_script('hta-theme', 'htaLanding', [
-        'ajaxUrl' => admin_url('admin-ajax.php'),
-        'nonce'   => wp_create_nonce('hta_submit_event'),
-        'i18n'    => [
+        'ajaxUrl'   => admin_url('admin-ajax.php'),
+        'nonce'     => wp_create_nonce('hta_submit_event'),
+        'citiesUrl' => HTA_URI . '/assets/data/israel-cities.json',
+        'i18n'      => [
             'sending' => __('שולח...', 'hta-landing'),
             'success' => __('ההגשה התקבלה ותעבור לסקירה.', 'hta-landing'),
             'error'   => __('אירעה שגיאה. נסו שוב.', 'hta-landing'),
+            'agree'   => __('יש לאשר את התקנון, מדיניות הפרטיות ואת נכונות המידע.', 'hta-landing'),
+            'city'    => __('יש לבחור עיר או יישוב מתוך הרשימה.', 'hta-landing'),
         ],
     ]);
 

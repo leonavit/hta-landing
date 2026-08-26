@@ -78,13 +78,56 @@ $status = isset($_GET['hta_submit']) ? sanitize_key(wp_unslash($_GET['hta_submit
                     <label class="block text-sm mb-1 text-hta-1" for="event_datetime">תאריך ושעה *</label>
                     <input type="datetime-local" id="event_datetime" name="event_datetime" required dir="ltr" class="w-full min-w-0 bg-slate-950 border border-slate-800 px-4 py-3 text-white focus:outline-none focus:border-hta-1">
                 </div>
-                <div>
-                    <label class="block text-sm mb-1 text-hta-1" for="event_location">מיקום האירוע *</label>
-                    <input type="text" id="event_location" name="event_location" required maxlength="180" class="w-full bg-slate-950 border border-slate-800 px-4 py-3 text-white focus:outline-none focus:border-hta-1" placeholder="למשל: תל אביב / אונליין">
+                <div class="hta-city-field">
+                    <label class="block text-sm mb-1 text-hta-1" for="event_location">עיר *</label>
+                    <div class="hta-city-combobox">
+                        <input
+                            type="text"
+                            id="event_location"
+                            name="event_location"
+                            required
+                            maxlength="180"
+                            autocomplete="off"
+                            spellcheck="false"
+                            role="combobox"
+                            aria-autocomplete="list"
+                            aria-expanded="false"
+                            aria-controls="event_location_listbox"
+                            aria-haspopup="listbox"
+                            aria-required="true"
+                            aria-describedby="event_location_hint"
+                            class="w-full bg-slate-950 border border-slate-800 px-4 py-3 text-white focus:outline-none focus:border-hta-1"
+                            placeholder="הקלידו שם עיר או יישוב"
+                        >
+                        <ul id="event_location_listbox" class="hta-city-listbox" role="listbox" hidden></ul>
+                    </div>
+                    <p id="event_location_hint" class="hta-city-hint">בחרו יישוב מתוך ההצעות לאחר הקלדת לפחות 2 תווים</p>
                 </div>
                 <div>
                     <label class="block text-sm mb-1 text-hta-1" for="event_description">תיאור קצר</label>
                     <textarea id="event_description" name="event_description" rows="3" maxlength="4000" class="w-full bg-slate-950 border border-slate-800 px-4 py-3 text-white focus:outline-none focus:border-hta-1 resize-none" placeholder="תאר בקצרה את האירוע..."></textarea>
+                </div>
+                <div class="hta-submit-agree">
+                    <input type="checkbox" id="event_agree" name="event_agree" value="1" required>
+                    <label for="event_agree">
+                        <?php
+                        echo wp_kses(
+                            sprintf(
+                                /* translators: 1: terms URL, 2: privacy URL */
+                                __('אני מאשר/ת שקראתי ומסכים/ה ל<a href="%1$s" target="_blank" rel="noopener noreferrer">תקנון האתר</a> ול<a href="%2$s" target="_blank" rel="noopener noreferrer">מדיניות הפרטיות</a>, ושהמידע שמסרתי נכון ומדויק.', 'hta-landing'),
+                                esc_url(hta_page_url('takkanon')),
+                                esc_url(hta_page_url('mediniut-pratiut'))
+                            ),
+                            [
+                                'a' => [
+                                    'href'   => true,
+                                    'target' => true,
+                                    'rel'    => true,
+                                ],
+                            ]
+                        );
+                        ?>
+                    </label>
                 </div>
                 <p id="hta-form-status" class="text-sm min-h-5" role="status" aria-live="polite"></p>
                 <button type="submit" class="hta-btn w-full py-3.5 mt-2">שלחו להגשה</button>

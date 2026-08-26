@@ -83,6 +83,15 @@ function hta_handle_event_submission(): void
         hta_submission_error(__('יש למלא את כל השדות החובה.', 'hta-landing'));
     }
 
+    if (! hta_is_valid_israel_city($location)) {
+        hta_submission_error(__('יש לבחור עיר או יישוב מתוך הרשימה.', 'hta-landing'));
+    }
+
+    $agree = ! empty($_POST['event_agree']);
+    if (! $agree) {
+        hta_submission_error(__('יש לאשר את התקנון, מדיניות הפרטיות ואת נכונות המידע.', 'hta-landing'));
+    }
+
     if (! preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/', $datetime)) {
         hta_submission_error(__('תאריך או שעה לא תקינים.', 'hta-landing'));
     }

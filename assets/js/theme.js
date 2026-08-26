@@ -1476,52 +1476,89 @@
             event.preventDefault();
             var button = form.querySelector('button[type="submit"]');
             var status = document.getElementById('hta-form-status');
-            var data = new FormData(form);
-            data.set('action', 'hta_submit_event');
-            data.set('hta_nonce', htaLanding.nonce);
+            var agree = form.querySelector('#event_agree');
+            var cityInput = form.querySelector('#event_location');
 
-            if (button) {
-                button.disabled = true;
-                button.textContent = htaLanding.i18n.sending;
-            }
-            if (status) {
-                status.textContent = '';
-                status.className = 'text-sm min-h-5';
+            if (agree && !agree.checked) {
+                if (status) {
+                    status.textContent = htaLanding.i18n.agree || 'יש לאשר את התקנון, מדיניות הפרטיות ואת נכונות המידע.';
+                    status.className = 'text-sm min-h-5 is-error';
+                }
+                if (agree.focus) {
+                    agree.focus();
+                }
+                return;
             }
 
-            fetch(htaLanding.ajaxUrl, {
-                method: 'POST',
-                credentials: 'same-origin',
-                body: data
-            })
-                .then(function (response) {
-                    return response.json();
+            function send() {
+                var data = new FormData(form);
+                data.set('action', 'hta_submit_event');
+                data.set('hta_nonce', htaLanding.nonce);
+
+                if (button) {
+                    button.disabled = true;
+                    button.textContent = htaLanding.i18n.sending;
+                }
+                if (status) {
+                    status.textContent = '';
+                    status.className = 'text-sm min-h-5';
+                }
+
+                fetch(htaLanding.ajaxUrl, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    body: data
                 })
-                .then(function (json) {
-                    var ok = json && json.success;
-                    var message = ok
-                        ? (json.data && json.data.message) || htaLanding.i18n.success
-                        : (json.data && json.data.message) || htaLanding.i18n.error;
-                    if (status) {
-                        status.textContent = message;
-                        status.classList.add(ok ? 'is-ok' : 'is-error');
+                    .then(function (response) {
+                        return response.json();
+                    })
+                    .then(function (json) {
+                        var ok = json && json.success;
+                        var message = ok
+                            ? (json.data && json.data.message) || htaLanding.i18n.success
+                            : (json.data && json.data.message) || htaLanding.i18n.error;
+                        if (status) {
+                            status.textContent = message;
+                            status.classList.add(ok ? 'is-ok' : 'is-error');
+                        }
+                        if (ok) {
+                            form.reset();
+                            if (cityInput) {
+                                cityInput.setAttribute('aria-invalid', 'false');
+                                cityInput.setAttribute('aria-expanded', 'false');
+                            }
+                        }
+                    })
+                    .catch(function () {
+                        if (status) {
+                            status.textContent = htaLanding.i18n.error;
+                            status.classList.add('is-error');
+                        }
+                    })
+                    .finally(function () {
+                        if (button) {
+                            button.disabled = false;
+                            button.textContent = 'שלחו להגשה';
+                        }
+                    });
+            }
+
+            if (cityInput && typeof cityInput.htaCityValidate === 'function') {
+                cityInput.htaCityValidate().then(function (ok) {
+                    if (!ok) {
+                        if (status) {
+                            status.textContent = htaLanding.i18n.city || 'יש לבחור עיר או יישוב מתוך הרשימה.';
+                            status.className = 'text-sm min-h-5 is-error';
+                        }
+                        cityInput.focus();
+                        return;
                     }
-                    if (ok) {
-                        form.reset();
-                    }
-                })
-                .catch(function () {
-                    if (status) {
-                        status.textContent = htaLanding.i18n.error;
-                        status.classList.add('is-error');
-                    }
-                })
-                .finally(function () {
-                    if (button) {
-                        button.disabled = false;
-                        button.textContent = 'שלחו להגשה';
-                    }
+                    send();
                 });
+                return;
+            }
+
+            send();
         });
     }
 })();
