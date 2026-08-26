@@ -1,0 +1,36 @@
+.customize-control-range .hta-range-track {
+    position: relative;
+    padding-top: 28px;
+}
+
+.customize-control-range .hta-range-bubble {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    background: #1d2327;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    padding: 4px 6px;
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 2;
+}
+
+.customize-control-range .hta-range-bubble::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: -4px;
+    width: 0;
+    height: 0;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 4px solid #1d2327;
+    transform: translateX(-50%);
+}
+
+.customize-control-range input[type='range'] {
+    width: 100%;
+}
