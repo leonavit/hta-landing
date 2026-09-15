@@ -30,6 +30,7 @@ function hta_customize_register(WP_Customize_Manager $wp_customize): void
     hta_register_ambassadors_section($wp_customize);
     hta_register_partners_section($wp_customize);
     hta_register_media_section($wp_customize);
+    hta_register_general_section($wp_customize);
     hta_register_submit_section($wp_customize);
     hta_register_footer_section($wp_customize);
 }
@@ -656,6 +657,114 @@ function hta_register_media_section(WP_Customize_Manager $wp_customize): void
     hta_add_text_control($wp_customize, 'hta_media_subtitle', 'hta_media', __('תיאור', 'hta-landing'), 'כתבות, סרטונים וראיונות על שבוע ההיי-טק הישראלי.', 'textarea');
 }
 
+function hta_register_general_section(WP_Customize_Manager $wp_customize): void
+{
+    $wp_customize->add_section('hta_general', [
+        'title'       => __('הגדרות כלליות', 'hta-landing'),
+        'description' => __('SEO לעמוד הבית (כשאין עמוד WordPress ייעודי), ופיקסלים / קודי מעקב.', 'hta-landing'),
+        'panel'       => 'hta_landing',
+        'priority'    => 160,
+    ]);
+
+    hta_add_text_control(
+        $wp_customize,
+        'hta_home_seo_title',
+        'hta_general',
+        __('עמוד הבית — Title', 'hta-landing'),
+        ''
+    );
+    $wp_customize->get_control('hta_home_seo_title')->description = __('כותרת לדפדפן / SEO של עמוד הבית. אם ריק — שם האתר.', 'hta-landing');
+
+    hta_add_text_control(
+        $wp_customize,
+        'hta_home_seo_description',
+        'hta_general',
+        __('עמוד הבית — Description', 'hta-landing'),
+        '',
+        'textarea'
+    );
+    $wp_customize->get_control('hta_home_seo_description')->description = __('תיאור מטא של עמוד הבית. אם ריק — תיאור האתר.', 'hta-landing');
+
+    $wp_customize->add_setting('hta_home_seo_og_image', [
+        'default'           => 0,
+        'sanitize_callback' => 'absint',
+    ]);
+    $wp_customize->add_control(new WP_Customize_Media_Control($wp_customize, 'hta_home_seo_og_image', [
+        'label'       => __('עמוד הבית — OG Image', 'hta-landing'),
+        'description' => __('תמונה לשיתוף ברשתות (Open Graph). מומלץ 1200×630.', 'hta-landing'),
+        'section'     => 'hta_general',
+        'mime_type'   => 'image',
+    ]));
+
+    hta_add_text_control(
+        $wp_customize,
+        'hta_seo_canonical_base',
+        'hta_general',
+        __('כתובת Canonical (דומיין ראשי)', 'hta-landing'),
+        'https://hiweek.hta.org.il'
+    );
+    $wp_customize->get_control('hta_seo_canonical_base')->description = __('למשל https://hiweek.hta.org.il — ישמש לתגית canonical בעמוד הבית ובעמודים פנימיים.', 'hta-landing');
+
+    hta_add_text_control(
+        $wp_customize,
+        'hta_seo_author',
+        'hta_general',
+        __('Author', 'hta-landing'),
+        'איגוד ההיי-טק הישראלי'
+    );
+
+    hta_add_text_control(
+        $wp_customize,
+        'hta_seo_publisher',
+        'hta_general',
+        __('Publisher', 'hta-landing'),
+        'איגוד ההיי-טק הישראלי'
+    );
+
+    hta_add_text_control(
+        $wp_customize,
+        'hta_seo_keywords',
+        'hta_general',
+        __('Keywords', 'hta-landing'),
+        'שבוע ההייטק הישראלי, איגוד ההייטק, כנס הייטק 2026, אירועי טכנולוגיה',
+        'textarea'
+    );
+    $wp_customize->get_control('hta_seo_keywords')->description = __('מילות מפתח מופרדות בפסיקים.', 'hta-landing');
+
+    $fields = [
+        'hta_tracking_facebook' => [
+            'label'       => __('פיקסל פייסבוק', 'hta-landing'),
+            'description' => __('מזהה מספרי (למשל 1234567890) או קוד הפיקסל המלא.', 'hta-landing'),
+        ],
+        'hta_tracking_gtm'      => [
+            'label'       => __('Google Tag Manager', 'hta-landing'),
+            'description' => __('מזהה GTM-XXXXXXX או קטע ה־head של Tag Manager.', 'hta-landing'),
+        ],
+        'hta_tracking_gsc'      => [
+            'label'       => __('Google Search Console', 'hta-landing'),
+            'description' => __('קוד אימות (content) או תגית meta מלאה.', 'hta-landing'),
+        ],
+        'hta_tracking_ga'       => [
+            'label'       => __('Google Analytics', 'hta-landing'),
+            'description' => __('מזהה Measurement ID (G-XXXX) או קטע gtag מלא.', 'hta-landing'),
+        ],
+    ];
+
+    foreach ($fields as $id => $field) {
+        $wp_customize->add_setting($id, [
+            'default'           => '',
+            'sanitize_callback' => 'hta_sanitize_tracking_code',
+            'transport'         => 'refresh',
+        ]);
+        $wp_customize->add_control($id, [
+            'label'       => $field['label'],
+            'description' => $field['description'],
+            'section'     => 'hta_general',
+            'type'        => 'textarea',
+        ]);
+    }
+}
+
 function hta_register_submit_section(WP_Customize_Manager $wp_customize): void
 {
     $wp_customize->add_section('hta_submit', [
@@ -671,6 +780,7 @@ function hta_register_submit_section(WP_Customize_Manager $wp_customize): void
     hta_add_text_control($wp_customize, 'hta_submit_form_text', 'hta_submit', __('טקסט טופס', 'hta-landing'), 'מלאו את הפרטים ושלחו להגשה.');
     hta_add_text_control($wp_customize, 'hta_submit_note_title', 'hta_submit', __('כותרת הערה', 'hta-landing'), 'ניהול אירועים דיגיטלי');
     hta_add_text_control($wp_customize, 'hta_submit_note_text', 'hta_submit', __('טקסט הערה', 'hta-landing'), 'האירוע שלכם יכלול דף ייעודי, כלי הרשמה ומעקב, ועדכונים ישירים בפלטפורמה.', 'textarea');
+    hta_add_text_control($wp_customize, 'hta_submit_note_phone', 'hta_submit', __('טלפון לחיוג', 'hta-landing'), '+972 (0) 3-5198863');
 
     $benefits = [
         'חשיפה רחבה באתר המרכזי הארצי',

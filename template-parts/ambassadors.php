@@ -30,7 +30,7 @@ if (! $ambassadors->have_posts()) {
                     $role = hta_meta(get_the_ID(), '_hta_role');
                     $initial = $name ? mb_substr($name, 0, 1) : '';
                     ?>
-                    <div class="swiper-slide h-auto">
+                    <div class="swiper-slide">
                         <article class="hta-ambassador-card">
                             <span class="hta-draw-frame" aria-hidden="true">
                                 <span class="is-bl"></span>
@@ -43,9 +43,11 @@ if (! $ambassadors->have_posts()) {
                             <div class="hta-ambassador-photo">
                                 <?php if (has_post_thumbnail()) : ?>
                                     <?php
+                                    $thumb_id = (int) get_post_thumbnail_id();
                                     the_post_thumbnail('hta-ambassador', [
                                         'class' => 'hta-ambassador-img',
                                         'sizes' => '(min-width: 768px) 25vw, (min-width: 640px) 50vw, 100vw',
+                                        'alt'   => hta_attachment_alt($thumb_id, $name),
                                     ]);
                                     ?>
                                 <?php else : ?>
@@ -54,9 +56,7 @@ if (! $ambassadors->have_posts()) {
                             </div>
                             <div class="hta-ambassador-meta">
                                 <h4 class="hta-ambassador-name"><?php echo esc_html($name); ?></h4>
-                                <?php if ($role) : ?>
-                                    <span class="hta-ambassador-role"><?php echo esc_html($role); ?></span>
-                                <?php endif; ?>
+                                <span class="hta-ambassador-role"><?php echo esc_html($role); ?></span>
                             </div>
                         </article>
                     </div>

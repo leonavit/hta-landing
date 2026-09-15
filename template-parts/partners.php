@@ -31,10 +31,13 @@ if (! $partners->have_posts()) {
                     <?php if ($link) : ?><a href="<?php echo esc_url($link); ?>" target="_blank" rel="noopener noreferrer"><?php endif; ?>
                         <div class="hta-partner-logo">
                             <?php if (has_post_thumbnail()) : ?>
-                                <?php the_post_thumbnail('hta-partner', [
+                                <?php
+                                $thumb_id = (int) get_post_thumbnail_id();
+                                the_post_thumbnail('hta-partner', [
                                     'class' => 'hta-partner-logo-img',
-                                    'alt'   => get_the_title(),
-                                ]); ?>
+                                    'alt'   => hta_attachment_alt($thumb_id, get_the_title()),
+                                ]);
+                                ?>
                             <?php else : ?>
                                 <?php the_title(); ?>
                             <?php endif; ?>

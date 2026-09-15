@@ -30,7 +30,7 @@ function hta_submission_error(string $message, int $code = 400): void
         wp_send_json_error(['message' => $message], $code);
     }
 
-    wp_safe_redirect(add_query_arg('hta_submit', 'error', wp_get_referer() ?: home_url('/#submit-event')));
+    wp_safe_redirect(add_query_arg('hta_submit', 'error', wp_get_referer() ?: home_url('/#submit-event-form')));
     exit;
 }
 
@@ -40,7 +40,7 @@ function hta_submission_success(): void
         wp_send_json_success(['message' => __('ההגשה התקבלה ותעבור לסקירה.', 'hta-landing')]);
     }
 
-    wp_safe_redirect(add_query_arg('hta_submit', 'ok', wp_get_referer() ?: home_url('/#submit-event')));
+    wp_safe_redirect(add_query_arg('hta_submit', 'ok', wp_get_referer() ?: home_url('/#submit-event-form')));
     exit;
 }
 
@@ -73,17 +73,22 @@ function hta_handle_event_submission(): void
     $datetime = isset($_POST['event_datetime']) ? sanitize_text_field(wp_unslash($_POST['event_datetime'])) : '';
     $location = isset($_POST['event_location']) ? sanitize_text_field(wp_unslash($_POST['event_location'])) : '';
     $desc     = isset($_POST['event_description']) ? sanitize_textarea_field(wp_unslash($_POST['event_description'])) : '';
+    $online   = ! empty($_POST['event_online']);
 
     $name     = mb_substr($name, 0, 180);
     $company  = mb_substr($company, 0, 180);
     $location = mb_substr($location, 0, 180);
     $desc     = mb_substr($desc, 0, 4000);
 
-    if ('' === $name || '' === $company || '' === $datetime || '' === $location) {
+    if ($online) {
+        $location = '';
+    }
+
+    if ('' === $name || '' === $company || '' === $datetime || (! $online && '' === $location)) {
         hta_submission_error(__('יש למלא את כל השדות החובה.', 'hta-landing'));
     }
 
-    if (! hta_is_valid_israel_city($location)) {
+    if (! $online && ! hta_is_valid_israel_city($location)) {
         hta_submission_error(__('יש לבחור עיר או יישוב מתוך הרשימה.', 'hta-landing'));
     }
 
@@ -113,6 +118,7 @@ function hta_handle_event_submission(): void
     update_post_meta($post_id, '_hta_datetime', $datetime);
     update_post_meta($post_id, '_hta_location', $location);
     update_post_meta($post_id, '_hta_host_company', $company);
+    update_post_meta($post_id, '_hta_online', $online ? '1' : '');
     update_post_meta($post_id, '_hta_from_frontend', '1');
 
     hta_submission_success();

@@ -49,7 +49,7 @@ function hta_contrast_text_color(string $hex): string
         $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
     }
     if (6 !== strlen($hex)) {
-        return '#fff';
+        return '#080c1f';
     }
 
     $r = hexdec(substr($hex, 0, 2));

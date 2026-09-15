@@ -14,6 +14,8 @@
 <body <?php body_class('bg-slate-950 text-slate-100 antialiased'); ?>>
 <?php wp_body_open(); ?>
 
+<a class="hta-skip-link" href="#about"><?php esc_html_e('דלג לתוכן המרכזי', 'hta-landing'); ?></a>
+
 <nav class="hta-site-nav fixed top-0 left-0 right-0 z-50 bg-transparent">
     <div class="hta-site-nav-inner max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 items-center">
         <a href="<?php echo esc_url(home_url('/')); ?>" class="hta-nav-brand flex items-center">
@@ -30,7 +32,10 @@
             <a href="#media" class="nav-link" data-target="media">מן התקשורת</a>
         </div>
 
-        <a href="#submit-event" class="hta-btn hta-nav-cta nav-link shrink-0 px-5 py-2.5 text-base whitespace-nowrap" data-target="submit-event">הגשת אירוע</a>
+        <a href="#submit-event-form" class="hta-btn hta-nav-cta nav-link shrink-0 px-5 py-2.5 text-base whitespace-nowrap" data-target="submit-event">
+            <span class="hta-particle-field hta-particle-field--btn" data-particle-count="14" aria-hidden="true"></span>
+            <span class="hta-nav-cta-label">הגשת אירוע</span>
+        </a>
         <button id="menuBtn" class="hta-nav-toggle hta-hamburger-btn lg:hidden focus:outline-none" type="button" aria-label="פתח תפריט" aria-expanded="false" aria-controls="mobileMenu">
             <?php hta_render_hamburger_icon('nav'); ?>
         </button>
@@ -52,6 +57,6 @@
         <a href="#ambassadors" class="mobile-link">שגרירים</a>
         <a href="#partners" class="mobile-link">שותפים</a>
         <a href="#media" class="mobile-link">מן התקשורת</a>
-        <a href="#submit-event" class="mobile-link hta-mobile-submit nav-link" data-target="submit-event">הגשת אירוע</a>
+        <a href="#submit-event-form" class="mobile-link hta-mobile-submit nav-link" data-target="submit-event">הגשת אירוע</a>
     </div>
 </div>

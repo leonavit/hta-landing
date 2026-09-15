@@ -76,6 +76,16 @@ function hta_enqueue_assets(): void
         true
     );
 
+    if (is_front_page()) {
+        wp_enqueue_script(
+            'lordicon',
+            'https://cdn.lordicon.com/lordicon.js',
+            [],
+            null,
+            true
+        );
+    }
+
     wp_enqueue_script(
         'hta-city-autocomplete',
         HTA_URI . '/assets/js/city-autocomplete.js',
@@ -97,11 +107,17 @@ function hta_enqueue_assets(): void
         'nonce'     => wp_create_nonce('hta_submit_event'),
         'citiesUrl' => HTA_URI . '/assets/data/israel-cities.json',
         'i18n'      => [
-            'sending' => __('שולח...', 'hta-landing'),
-            'success' => __('ההגשה התקבלה ותעבור לסקירה.', 'hta-landing'),
-            'error'   => __('אירעה שגיאה. נסו שוב.', 'hta-landing'),
-            'agree'   => __('יש לאשר את התקנון, מדיניות הפרטיות ואת נכונות המידע.', 'hta-landing'),
-            'city'    => __('יש לבחור עיר או יישוב מתוך הרשימה.', 'hta-landing'),
+            'sending'          => __('שולח...', 'hta-landing'),
+            'success'          => __('ההגשה התקבלה ותעבור לסקירה.', 'hta-landing'),
+            'error'            => __('אירעה שגיאה. נסו שוב.', 'hta-landing'),
+            'agree'            => __('יש לאשר את התקנון, מדיניות הפרטיות ואת נכונות המידע.', 'hta-landing'),
+            'city'             => __('יש לבחור עיר או יישוב מתוך הרשימה.', 'hta-landing'),
+            'cityRequired'     => __('יש לבחור עיר או יישוב.', 'hta-landing'),
+            'name'             => __('יש להזין שם אירוע.', 'hta-landing'),
+            'company'          => __('יש להזין שם חברה מארחת.', 'hta-landing'),
+            'datetime'         => __('יש לבחור תאריך ושעה.', 'hta-landing'),
+            'datetimeInvalid'  => __('תאריך או שעה לא תקינים.', 'hta-landing'),
+            'fixFields'        => __('יש לתקן את השדות המסומנים.', 'hta-landing'),
         ],
     ]);
 
@@ -253,6 +269,9 @@ tailwind.config = {
       },
       fontFamily: {
         sans: ['Assistant', 'sans-serif']
+      },
+      fontSize: {
+        sm: ['0.875rem', { lineHeight: '1.55rem' }]
       }
     }
   },

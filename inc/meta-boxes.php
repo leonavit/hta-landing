@@ -18,6 +18,35 @@ function hta_add_meta_boxes(): void
 }
 add_action('add_meta_boxes', 'hta_add_meta_boxes');
 
+function hta_event_admin_assets(string $hook): void
+{
+    if (! in_array($hook, ['post.php', 'post-new.php'], true)) {
+        return;
+    }
+
+    $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+    if (! $screen || 'hta_event' !== $screen->post_type) {
+        return;
+    }
+
+    wp_enqueue_media();
+    wp_enqueue_script(
+        'hta-event-metabox',
+        HTA_URI . '/assets/js/event-metabox.js',
+        ['jquery'],
+        HTA_VERSION,
+        true
+    );
+    wp_add_inline_style(
+        'wp-admin',
+        '.hta-admin-city-select{min-width:min(100%,28rem);max-width:100%;}'
+        . '.hta-admin-banner-preview{margin:0.5rem 0;max-width:16rem;}'
+        . '.hta-admin-banner-preview img{display:block;max-width:100%;height:auto;border:1px solid #c3c4c7;background:#0f172a;}'
+        . '.hta-admin-banner-actions{display:flex;gap:0.5rem;flex-wrap:wrap;}'
+    );
+}
+add_action('admin_enqueue_scripts', 'hta_event_admin_assets');
+
 function hta_metabox_nonce(): void
 {
     wp_nonce_field('hta_save_meta', 'hta_meta_nonce');
@@ -28,17 +57,43 @@ function hta_render_event_metabox(WP_Post $post): void
     hta_metabox_nonce();
     $date     = hta_meta($post->ID, '_hta_date');
     $location = hta_meta($post->ID, '_hta_location');
+    $online   = hta_event_is_online($post->ID);
     $link     = hta_meta($post->ID, '_hta_external_link');
-    $cat      = hta_meta($post->ID, '_hta_category');
-    if ('' === $cat) {
-        $assigned = wp_get_object_terms($post->ID, 'hta_event_cat', ['fields' => 'slugs']);
-        if (! is_wp_error($assigned) && ! empty($assigned)) {
-            $cat = (string) $assigned[0];
-        }
-    }
+    $cat_term = hta_get_event_category_term($post->ID);
+    $cat_id   = $cat_term ? (int) $cat_term->term_id : 0;
     $company  = hta_meta($post->ID, '_hta_host_company');
+    $promoted = hta_event_is_promoted($post->ID);
+    $banner_id = hta_event_banner_id($post->ID);
+    $banner_src = $banner_id ? wp_get_attachment_image_url($banner_id, 'medium') : '';
     $terms    = get_terms(['taxonomy' => 'hta_event_cat', 'hide_empty' => false]);
+    $cities   = hta_israel_cities();
+    $location_in_list = '' !== $location && in_array($location, $cities, true);
     ?>
+    <p>
+        <label for="hta_promoted">
+            <input type="checkbox" id="hta_promoted" name="hta_promoted" value="1" <?php checked($promoted); ?>>
+            ראשון מקודם
+        </label><br>
+        <span class="description">יוצג כבאנר תמונה בלבד, תמיד ראשון בשורה הראשונה של האירועים — בלי תאריך, קטגוריה, חברה מארחת או עיר.</span>
+    </p>
+    <div id="hta-admin-banner-wrap" <?php echo $promoted ? '' : 'hidden'; ?>>
+        <p>
+            <strong>באנר</strong><br>
+            <span class="description">העלו תמונה שתוצג במלואה בכרטיס הראשון. מומלץ פוסטר אנכי.</span>
+        </p>
+        <input type="hidden" id="hta_banner_id" name="hta_banner_id" value="<?php echo esc_attr((string) $banner_id); ?>">
+        <div class="hta-admin-banner-preview" id="hta-admin-banner-preview">
+            <?php if ($banner_src) : ?>
+                <img src="<?php echo esc_url($banner_src); ?>" alt="">
+            <?php else : ?>
+                <span class="description">אין באנר</span>
+            <?php endif; ?>
+        </div>
+        <p class="hta-admin-banner-actions">
+            <button type="button" class="button" id="hta_banner_select">העלאת באנר</button>
+            <button type="button" class="button" id="hta_banner_remove" <?php disabled(! $banner_id); ?>>הסרת באנר</button>
+        </p>
+    </div>
     <p>
         <label for="hta_date"><strong>תאריך</strong></label><br>
         <input type="date" id="hta_date" name="hta_date" value="<?php echo esc_attr($date); ?>" class="regular-text">
@@ -49,7 +104,10 @@ function hta_render_event_metabox(WP_Post $post): void
             <option value="">— בחירה (חובה לפני פרסום) —</option>
             <?php if (! is_wp_error($terms)) : ?>
                 <?php foreach ($terms as $term) : ?>
-                    <option value="<?php echo esc_attr($term->slug); ?>" <?php selected($cat, $term->slug); ?>>
+                    <?php if (hta_is_mangled_event_cat_slug($term->slug)) : ?>
+                        <?php continue; ?>
+                    <?php endif; ?>
+                    <option value="<?php echo esc_attr((string) $term->term_id); ?>" <?php selected($cat_id, (int) $term->term_id); ?>>
                         <?php echo esc_html($term->name); ?>
                     </option>
                 <?php endforeach; ?>
@@ -62,9 +120,46 @@ function hta_render_event_metabox(WP_Post $post): void
         <input type="text" id="hta_host_company" name="hta_host_company" value="<?php echo esc_attr($company); ?>" class="regular-text">
     </p>
     <p>
-        <label for="hta_location"><strong>מיקום</strong></label><br>
-        <input type="text" id="hta_location" name="hta_location" value="<?php echo esc_attr($location); ?>" class="regular-text">
+        <label for="hta_online">
+            <input type="checkbox" id="hta_online" name="hta_online" value="1" <?php checked($online); ?>>
+            האירוע יתקיים אונליין (וובינר)
+        </label>
     </p>
+    <p id="hta-admin-city-wrap">
+        <label for="hta_location"><strong>עיר</strong></label><br>
+        <select id="hta_location" name="hta_location" class="regular-text hta-admin-city-select">
+            <option value="">— בחרו עיר / יישוב —</option>
+            <?php if ('' !== $location && ! $location_in_list) : ?>
+                <option value="<?php echo esc_attr($location); ?>" selected>
+                    <?php echo esc_html($location . ' (לא ברשימה — בחרו יישוב תקין)'); ?>
+                </option>
+            <?php endif; ?>
+            <?php foreach ($cities as $city) : ?>
+                <option value="<?php echo esc_attr($city); ?>" <?php selected($location, $city); ?>>
+                    <?php echo esc_html($city); ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+        <span class="description">בחירה מרשימת היישובים של טופס ההגשה בלבד (ללא הקלדה חופשית).</span>
+    </p>
+    <script>
+    (function () {
+        var box = document.getElementById('hta_online');
+        var wrap = document.getElementById('hta-admin-city-wrap');
+        if (!box || !wrap) {
+            return;
+        }
+        function sync() {
+            wrap.hidden = box.checked;
+            var sel = wrap.querySelector('#hta_location');
+            if (sel) {
+                sel.disabled = box.checked;
+            }
+        }
+        box.addEventListener('change', sync);
+        sync();
+    })();
+    </script>
     <p>
         <label for="hta_external_link"><strong>קישור חיצוני</strong></label><br>
         <input type="text" id="hta_external_link" name="hta_external_link" value="<?php echo esc_attr($link); ?>" class="regular-text ltr" placeholder="https:// או #">
@@ -121,6 +216,132 @@ function hta_render_media_metabox(WP_Post $post): void
     <?php
 }
 
+function hta_is_mangled_event_cat_slug(string $slug): bool
+{
+    return (bool) preg_match('/(?:d7[0-9a-f]{2}){3,}/i', $slug);
+}
+
+function hta_unmangle_event_cat_slug(string $slug): string
+{
+    $stripped = str_replace('%', '', $slug);
+    if (! preg_match('/^(.*?)((?:d7[0-9a-f]{2})+)$/i', $stripped, $matches)) {
+        return $slug;
+    }
+
+    $prefix = $matches[1];
+    $hex    = $matches[2];
+    if (strlen($hex) % 2 !== 0) {
+        return $slug;
+    }
+
+    $bytes = hex2bin($hex);
+    if (false === $bytes || '' === $bytes) {
+        return $slug;
+    }
+
+    return $prefix . $bytes;
+}
+
+function hta_event_category_slug_candidates(string $raw): array
+{
+    $raw = trim($raw);
+    if ('' === $raw) {
+        return [];
+    }
+
+    $decoded   = rawurldecode($raw);
+    $unmangled = hta_unmangle_event_cat_slug($raw);
+    $candidates = [$raw, $decoded, $unmangled, sanitize_key($raw)];
+
+    if (function_exists('sanitize_title')) {
+        $candidates[] = sanitize_title($unmangled);
+        $candidates[] = sanitize_title($decoded);
+    }
+
+    $stripped = sanitize_key(str_replace('%', '', $raw));
+    if (preg_match('/^(.*?)((?:d7[0-9a-f]{2})+)$/i', $stripped, $matches)) {
+        $encoded = $matches[1];
+        $hex     = strtolower($matches[2]);
+        $length  = strlen($hex);
+        for ($i = 0; $i < $length; $i += 2) {
+            $encoded .= '%' . substr($hex, $i, 2);
+        }
+        $candidates[] = $encoded;
+    }
+
+    return array_values(array_unique(array_filter($candidates)));
+}
+
+function hta_find_event_category_term($value): ?WP_Term
+{
+    if (is_int($value) || (is_string($value) && ctype_digit($value))) {
+        $term = get_term((int) $value, 'hta_event_cat');
+        if ($term instanceof WP_Term && ! is_wp_error($term) && ! hta_is_mangled_event_cat_slug($term->slug)) {
+            return $term;
+        }
+    }
+
+    $raw = trim((string) $value);
+    if ('' === $raw) {
+        return null;
+    }
+
+    foreach (hta_event_category_slug_candidates($raw) as $slug) {
+        $found = get_term_by('slug', $slug, 'hta_event_cat');
+        if ($found instanceof WP_Term && ! hta_is_mangled_event_cat_slug($found->slug)) {
+            return $found;
+        }
+    }
+
+    $all = get_terms([
+        'taxonomy'   => 'hta_event_cat',
+        'hide_empty' => false,
+    ]);
+    if (is_wp_error($all) || empty($all)) {
+        return null;
+    }
+
+    $normalized = array_map('rawurldecode', hta_event_category_slug_candidates($raw));
+    foreach ($all as $term) {
+        if (! $term instanceof WP_Term || hta_is_mangled_event_cat_slug($term->slug)) {
+            continue;
+        }
+        $term_decoded = rawurldecode($term->slug);
+        foreach ($normalized as $slug) {
+            if ($term->slug === $slug || $term_decoded === $slug || $term_decoded === rawurldecode($slug)) {
+                return $term;
+            }
+        }
+    }
+
+    return null;
+}
+
+function hta_get_event_category_term(int $post_id): ?WP_Term
+{
+    $assigned = wp_get_object_terms($post_id, 'hta_event_cat');
+    if (! is_wp_error($assigned) && ! empty($assigned)) {
+        foreach ($assigned as $term) {
+            if ($term instanceof WP_Term && ! hta_is_mangled_event_cat_slug($term->slug)) {
+                return $term;
+            }
+        }
+        if ($assigned[0] instanceof WP_Term) {
+            $fixed = hta_find_event_category_term(hta_unmangle_event_cat_slug($assigned[0]->slug));
+            if ($fixed instanceof WP_Term) {
+                return $fixed;
+            }
+        }
+    }
+
+    $meta = hta_meta($post_id, '_hta_category');
+    if ('' !== $meta) {
+        return hta_find_event_category_term($meta);
+    }
+
+    return null;
+}
+
 function hta_get_posted_taxonomy_category_term_ids(): array
 {
     if (! isset($_POST['tax_input']['hta_event_cat'])) {
@@ -136,47 +357,48 @@ function hta_get_posted_taxonomy_category_term_ids(): array
     return $term_id > 0 ? [$term_id] : [];
 }
 
-function hta_get_posted_event_category_slug(): string
+function hta_get_posted_event_category_term(): ?WP_Term
 {
     if (isset($_POST['hta_category'])) {
-        $slug = sanitize_key(wp_unslash($_POST['hta_category']));
-        if ('' !== $slug) {
-            return $slug;
+        $posted = wp_unslash($_POST['hta_category']);
+        $term   = hta_find_event_category_term($posted);
+        if ($term instanceof WP_Term) {
+            return $term;
         }
     }
 
     $term_ids = hta_get_posted_taxonomy_category_term_ids();
     if ([] !== $term_ids) {
-        $term = get_term((int) $term_ids[0], 'hta_event_cat');
-        if ($term && ! is_wp_error($term)) {
-            return $term->slug;
-        }
+        return hta_find_event_category_term((int) $term_ids[0]);
     }
 
-    return '';
+    return null;
 }
 
-function hta_resolve_event_category_slug(int $post_id): string
+function hta_get_posted_event_category_slug(): string
 {
-    $posted_slug = hta_get_posted_event_category_slug();
-    if ('' !== $posted_slug) {
-        return $posted_slug;
+    $term = hta_get_posted_event_category_term();
+    return $term instanceof WP_Term ? $term->slug : '';
+}
+
+function hta_resolve_event_category_term(int $post_id): ?WP_Term
+{
+    $posted = hta_get_posted_event_category_term();
+    if ($posted instanceof WP_Term) {
+        return $posted;
     }
 
-    if (isset($_POST['hta_meta_nonce']) && isset($_POST['hta_category']) && '' === sanitize_key(wp_unslash($_POST['hta_category']))) {
-        $term_ids = hta_get_posted_taxonomy_category_term_ids();
-        if ([] === $term_ids) {
-            return '';
+    if (isset($_POST['hta_meta_nonce']) && isset($_POST['hta_category'])) {
+        $raw = trim((string) wp_unslash($_POST['hta_category']));
+        if ('' === $raw) {
+            $term_ids = hta_get_posted_taxonomy_category_term_ids();
+            if ([] === $term_ids) {
+                return null;
+            }
         }
     }
 
-    $terms = wp_get_object_terms($post_id, 'hta_event_cat', ['fields' => 'slugs']);
-    if (! is_wp_error($terms) && ! empty($terms)) {
-        return (string) $terms[0];
-    }
-
-    $meta = hta_meta($post_id, '_hta_category');
-    return is_string($meta) ? $meta : '';
+    return hta_get_event_category_term($post_id);
 }
 
 function hta_sync_event_category(int $post_id): void
@@ -198,11 +420,13 @@ function hta_sync_event_category(int $post_id): void
 
     $syncing[$post_id] = true;
 
-    $slug = hta_resolve_event_category_slug($post_id);
+    $term = hta_resolve_event_category_term($post_id);
+    $slug = $term instanceof WP_Term ? $term->slug : '';
+
     update_post_meta($post_id, '_hta_category', $slug);
 
-    if ('' !== $slug) {
-        wp_set_object_terms($post_id, [$slug], 'hta_event_cat', false);
+    if ($term instanceof WP_Term) {
+        wp_set_object_terms($post_id, [(int) $term->term_id], 'hta_event_cat', false);
     } else {
         wp_set_object_terms($post_id, [], 'hta_event_cat', false);
     }
@@ -295,6 +519,73 @@ function hta_event_category_admin_notice(): void
 }
 add_action('admin_notices', 'hta_event_category_admin_notice');
 
+function hta_cleanup_mangled_event_categories(): void
+{
+    if ('1' === get_option('hta_cleaned_mangled_event_cats_v2')) {
+        return;
+    }
+    if (! taxonomy_exists('hta_event_cat')) {
+        return;
+    }
+
+    $terms = get_terms([
+        'taxonomy'   => 'hta_event_cat',
+        'hide_empty' => false,
+    ]);
+    if (is_wp_error($terms)) {
+        return;
+    }
+
+    foreach ($terms as $term) {
+        if (! $term instanceof WP_Term || ! hta_is_mangled_event_cat_slug($term->slug)) {
+            continue;
+        }
+
+        $real        = hta_find_event_category_term(hta_unmangle_event_cat_slug($term->slug));
+        $object_ids  = get_objects_in_term((int) $term->term_id, 'hta_event_cat');
+        if (is_wp_error($object_ids)) {
+            $object_ids = [];
+        }
+
+        if ($real instanceof WP_Term && (int) $real->term_id !== (int) $term->term_id) {
+            foreach ($object_ids as $post_id) {
+                wp_set_object_terms((int) $post_id, [(int) $real->term_id], 'hta_event_cat', false);
+                update_post_meta((int) $post_id, '_hta_category', $real->slug);
+            }
+            wp_delete_term((int) $term->term_id, 'hta_event_cat');
+            continue;
+        }
+
+        if (empty($object_ids)) {
+            wp_delete_term((int) $term->term_id, 'hta_event_cat');
+        }
+    }
+
+    $events = get_posts([
+        'post_type'      => 'hta_event',
+        'post_status'    => 'any',
+        'posts_per_page' => -1,
+        'fields'         => 'ids',
+        'meta_query'     => [
+            [
+                'key'     => '_hta_category',
+                'value'   => 'd7',
+                'compare' => 'LIKE',
+            ],
+        ],
+    ]);
+    foreach ($events as $post_id) {
+        $term = hta_get_event_category_term((int) $post_id);
+        if ($term instanceof WP_Term) {
+            update_post_meta((int) $post_id, '_hta_category', $term->slug);
+            wp_set_object_terms((int) $post_id, [(int) $term->term_id], 'hta_event_cat', false);
+        }
+    }
+
+    update_option('hta_cleaned_mangled_event_cats_v2', '1');
+}
+add_action('admin_init', 'hta_cleanup_mangled_event_categories');
+
 function hta_save_meta_boxes(int $post_id): void
 {
     if (! isset($_POST['hta_meta_nonce']) || ! wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['hta_meta_nonce'])), 'hta_save_meta')) {
@@ -314,11 +605,27 @@ function hta_save_meta_boxes(int $post_id): void
         $location = isset($_POST['hta_location']) ? sanitize_text_field(wp_unslash($_POST['hta_location'])) : '';
         $link     = isset($_POST['hta_external_link']) ? hta_sanitize_link((string) wp_unslash($_POST['hta_external_link'])) : '';
         $company  = isset($_POST['hta_host_company']) ? sanitize_text_field(wp_unslash($_POST['hta_host_company'])) : '';
+        $online   = ! empty($_POST['hta_online']);
+        $promoted = ! empty($_POST['hta_promoted']);
+        $banner_id = isset($_POST['hta_banner_id']) ? absint($_POST['hta_banner_id']) : 0;
+
+        if ($online) {
+            $location = '';
+        } elseif ('' !== $location && ! hta_is_valid_israel_city($location)) {
+            $location = '';
+        }
+
+        if ($banner_id && 'attachment' !== get_post_type($banner_id)) {
+            $banner_id = 0;
+        }
 
         update_post_meta($post_id, '_hta_date', $date);
         update_post_meta($post_id, '_hta_location', $location);
         update_post_meta($post_id, '_hta_external_link', $link);
         update_post_meta($post_id, '_hta_host_company', $company);
+        update_post_meta($post_id, '_hta_online', $online ? '1' : '');
+        update_post_meta($post_id, '_hta_promoted', $promoted ? '1' : '');
+        update_post_meta($post_id, '_hta_banner_id', $banner_id ? (string) $banner_id : '');
     }
 
     if ('hta_ambassador' === $type) {

@@ -37,10 +37,22 @@ $status = isset($_GET['hta_submit']) ? sanitize_key(wp_unslash($_GET['hta_submit
             <div class="hta-submit-note">
                 <h4 class="hta-submit-note-title"><?php echo esc_html(hta_mod('hta_submit_note_title', 'ניהול אירועים דיגיטלי')); ?></h4>
                 <p class="hta-submit-note-text"><?php echo esc_html(hta_mod('hta_submit_note_text', 'האירוע שלכם יכלול דף ייעודי, כלי הרשמה ומעקב, ועדכונים ישירים בפלטפורמה.')); ?></p>
+                <?php
+                $submit_phone = hta_mod('hta_submit_note_phone', '+972 (0) 3-5198863');
+                $submit_phone = trim((string) $submit_phone);
+                if ('' !== $submit_phone) :
+                    $tel_href = hta_phone_tel_href($submit_phone);
+                    ?>
+                    <?php if ('' !== $tel_href) : ?>
+                        <a class="hta-submit-note-phone hta-bidi-ltr" dir="ltr" href="<?php echo esc_attr('tel:' . $tel_href); ?>"><?php echo esc_html($submit_phone); ?></a>
+                    <?php else : ?>
+                        <span class="hta-submit-note-phone hta-bidi-ltr" dir="ltr"><?php echo esc_html($submit_phone); ?></span>
+                    <?php endif; ?>
+                <?php endif; ?>
             </div>
         </div>
 
-        <div class="hta-submit-form-panel p-8 md:p-10 shadow-2xl border border-slate-800" data-reveal>
+        <div id="submit-event-form" class="hta-submit-form-panel p-8 md:p-10 shadow-2xl border border-slate-800 scroll-mt-28" data-reveal>
             <span class="hta-draw-frame" aria-hidden="true">
                 <span class="is-bl"></span>
                 <span class="is-br"></span>
@@ -69,14 +81,37 @@ $status = isset($_GET['hta_submit']) ? sanitize_key(wp_unslash($_GET['hta_submit
                 <div>
                     <label class="block text-sm mb-1 text-hta-1" for="event_name">שם האירוע *</label>
                     <input type="text" id="event_name" name="event_name" required maxlength="180" class="w-full bg-slate-950 border border-slate-800 px-4 py-3 text-white focus:outline-none focus:border-hta-1" placeholder="הקלד את שם האירוע">
+                    <p class="hta-field-error" id="event_name_error" hidden></p>
                 </div>
                 <div>
                     <label class="block text-sm mb-1 text-hta-1" for="host_company">שם החברה המארחת *</label>
                     <input type="text" id="host_company" name="host_company" required maxlength="180" class="w-full bg-slate-950 border border-slate-800 px-4 py-3 text-white focus:outline-none focus:border-hta-1" placeholder="שם החברה או הארגון">
+                    <p class="hta-field-error" id="host_company_error" hidden></p>
                 </div>
-                <div class="w-full min-w-0 overflow-hidden">
+                <div class="hta-datetime-field">
                     <label class="block text-sm mb-1 text-hta-1" for="event_datetime">תאריך ושעה *</label>
-                    <input type="datetime-local" id="event_datetime" name="event_datetime" required dir="ltr" class="w-full min-w-0 bg-slate-950 border border-slate-800 px-4 py-3 text-white focus:outline-none focus:border-hta-1">
+                    <div class="hta-datetime-wrap" dir="ltr">
+                        <span
+                            class="hta-datetime-display is-empty"
+                            id="event_datetime_display"
+                            aria-hidden="true"
+                            data-placeholder="YYYY-MM-DD HH:MM"
+                        ></span>
+                        <input
+                            type="datetime-local"
+                            id="event_datetime"
+                            name="event_datetime"
+                            required
+                            dir="ltr"
+                            lang="en"
+                            class="hta-datetime-native w-full min-w-0 bg-transparent border border-slate-800 px-4 py-3 text-white focus:outline-none focus:border-hta-1"
+                        >
+                    </div>
+                    <p class="hta-field-error" id="event_datetime_error" hidden></p>
+                </div>
+                <div class="hta-online-field">
+                    <input type="checkbox" id="event_online" name="event_online" value="1">
+                    <label class="text-sm text-hta-1" for="event_online">האירוע יתקיים אונליין (וובינר)</label>
                 </div>
                 <div class="hta-city-field">
                     <label class="block text-sm mb-1 text-hta-1" for="event_location">עיר *</label>
@@ -101,8 +136,31 @@ $status = isset($_GET['hta_submit']) ? sanitize_key(wp_unslash($_GET['hta_submit
                         >
                         <ul id="event_location_listbox" class="hta-city-listbox" role="listbox" hidden></ul>
                     </div>
+                    <p class="hta-field-error" id="event_location_error" hidden></p>
                     <p id="event_location_hint" class="hta-city-hint">בחרו יישוב מתוך ההצעות לאחר הקלדת לפחות 2 תווים</p>
                 </div>
+                <script>
+                (function () {
+                    var box = document.getElementById('event_online');
+                    var wrap = document.querySelector('#hta-submit-form .hta-city-field');
+                    var input = document.getElementById('event_location');
+                    if (!box || !wrap) {
+                        return;
+                    }
+                    function sync() {
+                        var on = !!box.checked;
+                        wrap.hidden = on;
+                        wrap.classList.toggle('is-online-hidden', on);
+                        if (input) {
+                            input.required = !on;
+                            input.setAttribute('aria-required', on ? 'false' : 'true');
+                        }
+                    }
+                    box.addEventListener('change', sync);
+                    box.addEventListener('click', sync);
+                    sync();
+                })();
+                </script>
                 <div>
                     <label class="block text-sm mb-1 text-hta-1" for="event_description">תיאור קצר</label>
                     <textarea id="event_description" name="event_description" rows="3" maxlength="4000" class="w-full bg-slate-950 border border-slate-800 px-4 py-3 text-white focus:outline-none focus:border-hta-1 resize-none" placeholder="תאר בקצרה את האירוע..."></textarea>
@@ -128,9 +186,10 @@ $status = isset($_GET['hta_submit']) ? sanitize_key(wp_unslash($_GET['hta_submit
                         );
                         ?>
                     </label>
+                    <p class="hta-field-error" id="event_agree_error" hidden></p>
                 </div>
-                <p id="hta-form-status" class="text-sm min-h-5" role="status" aria-live="polite"></p>
-                <button type="submit" class="hta-btn w-full py-3.5 mt-2">שלחו להגשה</button>
+                <p id="hta-form-status" class="text-sm min-h-5" role="status" aria-live="polite" aria-atomic="true"></p>
+                <button type="submit" class="hta-btn w-full py-3.5 mt-2" formnovalidate>שלחו להגשה</button>
             </form>
         </div>
         </div>

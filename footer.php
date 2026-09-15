@@ -52,7 +52,33 @@ $social_links = hta_footer_social_links();
         </div>
     </div>
 </footer>
+<?php if (is_front_page()) : ?>
+<nav class="hta-section-rail" id="htaSectionRail" aria-label="<?php esc_attr_e('ניווט סקשנים', 'hta-landing'); ?>">
+    <?php
+    $hta_section_rail = [
+        'hero'           => __('ראש העמוד', 'hta-landing'),
+        'about'          => __('אודות', 'hta-landing'),
+        'why'            => __('למה זה חשוב', 'hta-landing'),
+        'topics'         => __('נושאי השבוע', 'hta-landing'),
+        'events-search'  => __('חיפוש אירועים', 'hta-landing'),
+        'ambassadors'    => __('שגרירים', 'hta-landing'),
+        'partners'       => __('שותפים', 'hta-landing'),
+        'media'          => __('מן התקשורת', 'hta-landing'),
+        'submit-event'   => __('הגשת אירוע', 'hta-landing'),
+    ];
+    foreach ($hta_section_rail as $section_id => $section_label) :
+        ?>
+        <a
+            href="#<?php echo esc_attr($section_id); ?>"
+            class="hta-section-rail-dot"
+            data-section="<?php echo esc_attr($section_id); ?>"
+            aria-label="<?php echo esc_attr($section_label); ?>"
+        ></a>
+    <?php endforeach; ?>
+</nav>
+<?php endif; ?>
 <button type="button" class="hta-back-top" id="htaBackTop" aria-label="חזרה לראש העמוד">
+    <span class="hta-particle-field hta-particle-field--btn" data-particle-count="10" aria-hidden="true"></span>
     <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="square" stroke-linejoin="miter" d="M12 19V5M5 12l7-7 7 7"></path>
     </svg>

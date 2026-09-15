@@ -39,6 +39,7 @@ function hta_register_cpts(): void
         'hierarchical'      => true,
         'show_admin_column' => true,
         'show_in_rest'      => false,
+        'meta_box_cb'       => false,
         'rewrite'           => ['slug' => 'event-category'],
     ]);
 

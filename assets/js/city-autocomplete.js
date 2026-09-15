@@ -138,18 +138,16 @@
         function selectCity(name) {
             selectedValue = name;
             input.value = name;
-            input.setAttribute('aria-invalid', 'false');
             setExpanded(false);
             listbox.innerHTML = '';
+            input.dispatchEvent(new Event('change', { bubbles: true }));
         }
 
         function markInvalidSelection() {
             if (selectedValue && input.value === selectedValue) {
-                input.setAttribute('aria-invalid', 'false');
                 return true;
             }
             selectedValue = '';
-            input.setAttribute('aria-invalid', input.value.trim() ? 'true' : 'false');
             return false;
         }
 
@@ -232,9 +230,13 @@
             }
         });
 
-        input.addEventListener('blur', function () {
+        input.addEventListener('blur', function (event) {
+            var next = event.relatedTarget;
             window.setTimeout(function () {
                 setExpanded(false);
+                if (next && input.form && input.form.contains(next)) {
+                    return;
+                }
                 markInvalidSelection();
             }, 120);
         });
@@ -299,15 +301,16 @@
             var value = input.value.replace(/\s+/g, ' ').trim();
             return loadCities().then(function (list) {
                 if (selectedValue && value === selectedValue) {
-                    input.setAttribute('aria-invalid', 'false');
                     return true;
                 }
                 if (list.indexOf(value) !== -1) {
-                    selectCity(value);
+                    selectedValue = value;
+                    input.value = value;
+                    setExpanded(false);
+                    listbox.innerHTML = '';
                     return true;
                 }
                 selectedValue = '';
-                input.setAttribute('aria-invalid', value ? 'true' : 'false');
                 return false;
             });
         };

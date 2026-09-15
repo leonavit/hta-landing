@@ -284,7 +284,7 @@ function hta_youtube_id(string $url): string
 
 function hta_event_search_blob(WP_Post $post): string
 {
-    $location = hta_meta($post->ID, '_hta_location');
+    $location = hta_event_location_label($post->ID);
     $terms    = wp_get_post_terms($post->ID, 'hta_event_cat', ['fields' => 'names']);
     $parts    = [
         $post->post_title,
@@ -436,6 +436,108 @@ function hta_is_valid_israel_city(string $name): bool
     }
 
     return in_array($name, hta_israel_cities(), true);
+}
+
+function hta_event_is_online(int $post_id): bool
+{
+    return '1' === hta_meta($post_id, '_hta_online');
+}
+
+function hta_event_is_promoted(int $post_id): bool
+{
+    return '1' === hta_meta($post_id, '_hta_promoted');
+}
+
+function hta_event_banner_id(int $post_id): int
+{
+    return (int) hta_meta($post_id, '_hta_banner_id');
+}
+
+/**
+ * Promoted banner events first, then by date ascending.
+ *
+ * @param WP_Post $a First event.
+ * @param WP_Post $b Second event.
+ */
+function hta_sort_event_posts(WP_Post $a, WP_Post $b): int
+{
+    $ap = hta_event_is_promoted((int) $a->ID) ? 1 : 0;
+    $bp = hta_event_is_promoted((int) $b->ID) ? 1 : 0;
+    if ($ap !== $bp) {
+        return $bp <=> $ap;
+    }
+
+    return strcmp(
+        (string) hta_meta((int) $a->ID, '_hta_date'),
+        (string) hta_meta((int) $b->ID, '_hta_date')
+    );
+}
+
+function hta_event_location_label(int $post_id): string
+{
+    if (hta_event_is_online($post_id)) {
+        return 'אונליין';
+    }
+
+    return hta_meta($post_id, '_hta_location');
+}
+
+/**
+ * Alt text from Media Library attachment, with optional fallback.
+ */
+function hta_attachment_alt(int $attachment_id, string $fallback = ''): string
+{
+    if ($attachment_id <= 0) {
+        return $fallback;
+    }
+
+    $alt = get_post_meta($attachment_id, '_wp_attachment_image_alt', true);
+    $alt = is_string($alt) ? trim($alt) : '';
+
+    if ('' !== $alt) {
+        return $alt;
+    }
+
+    $title = get_the_title($attachment_id);
+    if (is_string($title) && '' !== trim($title)) {
+        return trim($title);
+    }
+
+    return $fallback;
+}
+
+/**
+ * Render an attachment image using Media Library alt (fallback when empty).
+ *
+ * @param array<string, mixed> $attr
+ */
+function hta_attachment_image(int $attachment_id, string $size = 'large', array $attr = [], string $fallback_alt = ''): string
+{
+    if ($attachment_id <= 0) {
+        return '';
+    }
+
+    if (! isset($attr['alt']) || '' === (string) $attr['alt']) {
+        $attr['alt'] = hta_attachment_alt($attachment_id, $fallback_alt);
+    }
+
+    return (string) wp_get_attachment_image($attachment_id, $size, false, $attr);
+}
+
+/**
+ * tel: href from a human-readable phone display string.
+ */
+function hta_phone_tel_href(string $display): string
+{
+    $display = trim($display);
+    if ('' === $display) {
+        return '';
+    }
+
+    $normalized = preg_replace('/\(\s*0\s*\)/', '', $display) ?? $display;
+    $tel        = preg_replace('/[^\d+]/', '', $normalized) ?? '';
+
+    return $tel;
 }
 
 /**

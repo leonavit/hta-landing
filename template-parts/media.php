@@ -45,18 +45,32 @@ if (! $media->have_posts()) {
                                 <?php if ($is_video) : ?>
                                     <div class="hta-media-visual">
                                         <?php if ($yt) : ?>
-                                            <iframe src="<?php echo esc_url('https://www.youtube-nocookie.com/embed/' . $yt); ?>" title="<?php the_title_attribute(); ?>" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                            <iframe
+                                                class="hta-media-video"
+                                                src="<?php echo esc_url('https://www.youtube-nocookie.com/embed/' . $yt . '?enablejsapi=1&rel=0&playsinline=1'); ?>"
+                                                title="<?php the_title_attribute(); ?>"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                                allowfullscreen
+                                            ></iframe>
                                         <?php elseif (has_post_thumbnail()) : ?>
-                                            <?php the_post_thumbnail('hta-media'); ?>
+                                            <?php
+                                            $thumb_id = (int) get_post_thumbnail_id();
+                                            the_post_thumbnail('hta-media', [
+                                                'alt' => hta_attachment_alt($thumb_id, get_the_title()),
+                                            ]);
+                                            ?>
                                         <?php endif; ?>
                                     </div>
                                 <?php else : ?>
                                     <div class="hta-media-visual<?php echo has_post_thumbnail() ? '' : ' is-placeholder'; ?>">
                                         <?php
                                         if (has_post_thumbnail()) {
-                                            the_post_thumbnail('hta-media');
+                                            $thumb_id = (int) get_post_thumbnail_id();
+                                            the_post_thumbnail('hta-media', [
+                                                'alt' => hta_attachment_alt($thumb_id, get_the_title()),
+                                            ]);
                                         } else {
-                                            echo '<img src="' . esc_url(HTA_URI . '/assets/images/logo-hta.png') . '" alt="">';
+                                            echo '<img src="' . esc_url(HTA_URI . '/assets/images/logo-hta.png') . '" alt="' . esc_attr(get_the_title()) . '">';
                                         }
                                         ?>
                                     </div>
@@ -66,17 +80,37 @@ if (! $media->have_posts()) {
                                     <p class="text-slate-400 text-sm font-light mb-6"><?php echo esc_html($excerpt); ?></p>
                                 <?php endif; ?>
                             </div>
-                            <?php if ($link) : ?>
-                                <a href="<?php echo esc_url($link); ?>" class="text-hta-1 text-sm font-semibold hover:underline" <?php echo (0 === strpos($link, 'http')) ? 'target="_blank" rel="noopener noreferrer"' : ''; ?>>
-                                    <?php echo $is_video ? 'לסרטון ←' : 'לכתבה ←'; ?>
-                                </a>
-                            <?php endif; ?>
+                            <div class="hta-media-card-footer">
+                                <span class="hta-media-countdown" aria-hidden="true">
+                                    <span class="hta-media-countdown-value">5</span>
+                                </span>
+                                <?php if ($link) : ?>
+                                    <a href="<?php echo esc_url($link); ?>" class="hta-media-card-link text-hta-1 text-sm font-semibold hover:underline" <?php echo (0 === strpos($link, 'http')) ? 'target="_blank" rel="noopener noreferrer"' : ''; ?>>
+                                        <?php echo $is_video ? 'לסרטון ←' : 'לכתבה ←'; ?>
+                                    </a>
+                                <?php endif; ?>
+                            </div>
                         </article>
                     </div>
                 <?php endwhile; ?>
                 <?php wp_reset_postdata(); ?>
             </div>
-            <div class="swiper-pagination mt-8"></div>
+            <div class="hta-media-controls mt-8">
+                <div class="swiper-pagination"></div>
+                <button type="button" class="hta-media-autoplay-toggle" aria-label="<?php esc_attr_e('עצור קרוסלה', 'hta-landing'); ?>" aria-pressed="false">
+                    <span class="hta-media-autoplay-pause" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <rect x="6" y="5" width="4" height="14"></rect>
+                            <rect x="14" y="5" width="4" height="14"></rect>
+                        </svg>
+                    </span>
+                    <span class="hta-media-autoplay-play" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M8 5v14l11-7z"></path>
+                        </svg>
+                    </span>
+                </button>
+            </div>
         </div>
     </div>
 </section>

@@ -6,14 +6,22 @@
  */
 
 $image_id  = absint(hta_mod('hta_why_image', 0));
-$image_src = $image_id ? wp_get_attachment_image_url($image_id, 'large') : HTA_URI . '/assets/images/logo-hta.png';
+$why_title = hta_mod('hta_why_title', 'למה זה חשוב עכשיו?');
 ?>
 <section id="why" class="py-20 px-4 bg-slate-900/50 hta-rule-y scroll-mt-20">
     <div class="hta-why-layout max-w-6xl mx-auto">
-        <h2 class="hta-split-title hta-section-title font-extrabold text-white" data-reveal><?php echo esc_html(hta_mod('hta_why_title', 'למה זה חשוב עכשיו?')); ?></h2>
+        <h2 class="hta-split-title hta-section-title font-extrabold text-white" data-reveal><?php echo esc_html($why_title); ?></h2>
         <div class="hta-split-media hta-tilt-wrap w-full h-full" data-reveal>
             <div class="hta-tilt-card hta-tilt-orbit hta-fill-photo bg-slate-900 border border-slate-800 overflow-hidden shadow-xl">
-                <img src="<?php echo esc_url($image_src); ?>" alt="">
+                <?php
+                if ($image_id) {
+                    echo hta_attachment_image($image_id, 'large', [], $why_title); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                } else {
+                    ?>
+                    <img src="<?php echo esc_url(HTA_URI . '/assets/images/logo-hta.png'); ?>" alt="<?php echo esc_attr($why_title); ?>">
+                    <?php
+                }
+                ?>
             </div>
         </div>
         <div class="hta-split-copy" data-reveal>

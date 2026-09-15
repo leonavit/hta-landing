@@ -21,14 +21,22 @@
                 $title    = hta_mod("hta_topic_{$i}_title", '');
                 $text     = hta_mod("hta_topic_{$i}_text", '');
                 $image_id = absint(hta_mod("hta_topic_{$i}_image", 0));
-                $image_src = $image_id ? wp_get_attachment_image_url($image_id, 'hta-topic') : HTA_URI . '/assets/images/logo-hta.png';
                 if (! $title) {
                     continue;
                 }
+                $image_alt = $image_id ? hta_attachment_alt($image_id, $title) : $title;
                 ?>
                 <article class="hta-topic-card bg-slate-900 border border-slate-800 flex flex-col hover:border-hta-1/50 shadow-xl">
                     <div class="hta-topic-photo<?php echo $image_id ? '' : ' is-placeholder'; ?>">
-                        <img src="<?php echo esc_url($image_src); ?>" alt="<?php echo esc_attr($title); ?>">
+                        <?php
+                        if ($image_id) {
+                            echo hta_attachment_image($image_id, 'hta-topic', [], $title); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                        } else {
+                            ?>
+                            <img src="<?php echo esc_url(HTA_URI . '/assets/images/logo-hta.png'); ?>" alt="<?php echo esc_attr($image_alt); ?>">
+                            <?php
+                        }
+                        ?>
                     </div>
                     <div class="hta-topic-body">
                         <?php

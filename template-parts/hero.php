@@ -46,7 +46,7 @@ $video    = hta_hero_video();
         </p>
         <div class="hta-hero-ctas mt-8 flex flex-row gap-3 sm:gap-4 justify-center items-stretch">
             <a href="#events-search" class="hta-btn flex-1 sm:flex-none px-4 sm:px-8 py-3.5 text-center"><?php echo esc_html(hta_mod('hta_hero_cta_primary', 'חיפוש אירועים בשבוע')); ?></a>
-            <a href="#submit-event" class="hta-btn-secondary flex-1 sm:flex-none px-4 sm:px-8 py-3.5 text-center"><?php echo esc_html(hta_mod('hta_hero_cta_secondary', 'הגשת אירוע משלכם')); ?></a>
+            <a href="#submit-event-form" class="hta-btn-secondary flex-1 sm:flex-none px-4 sm:px-8 py-3.5 text-center"><?php echo esc_html(hta_mod('hta_hero_cta_secondary', 'הגשת אירוע משלכם')); ?></a>
         </div>
     </div>
 </header>
