@@ -1292,6 +1292,20 @@ section ol li,
     color: #080c1f;
 }
 
+.hta-event-date {
+    display: block;
+    margin: 0.75rem 0 0;
+    color: var(--hta-primary-1, #22d3ee);
+    font-family: 'Electrolize', 'Assistant', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    line-height: 1.4;
+    direction: ltr;
+    unicode-bidi: isolate;
+    text-align: right;
+}
+
 .hta-event-city {
     display: inline-flex;
     align-items: center;
@@ -1307,8 +1321,15 @@ section ol li,
 }
 
 .hta-event-city,
-.hta-event-link {
+.hta-event-link,
+.hta-event-closed {
     font-size: 13px;
+}
+
+.hta-event-closed {
+    color: #94a3b8;
+    font-weight: 600;
+    flex-shrink: 0;
 }
 
 .hta-event-link {

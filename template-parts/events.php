@@ -103,6 +103,8 @@ if ($events->have_posts()) {
                     $cat_bg   = ($term && ! is_wp_error($term)) ? hta_event_cat_bg($term) : '';
                     $cat_fg   = $cat_bg ? hta_contrast_text_color($cat_bg) : '';
                     $title    = get_the_title();
+                    $event_date = hta_event_date_label((int) $id);
+                    $event_date_iso = hta_event_date_iso((int) $id);
                     ?>
                     <?php if ($is_promoted && $banner_id > 0) : ?>
                         <article
@@ -167,6 +169,9 @@ if ($events->have_posts()) {
                                         <?php endif; ?>
                                     ><?php echo esc_html($label); ?></span>
                                 <?php endif; ?>
+                                <?php if ($event_date) : ?>
+                                    <time class="hta-event-date" datetime="<?php echo esc_attr($event_date_iso); ?>"><?php echo esc_html($event_date); ?></time>
+                                <?php endif; ?>
                                 <h3 class="text-xl font-bold mt-4 mb-2 text-white"><?php the_title(); ?></h3>
                                 <p class="text-slate-400 text-sm font-light mb-4"><?php echo esc_html(wp_strip_all_tags(get_the_content())); ?></p>
                             </div>
@@ -191,6 +196,8 @@ if ($events->have_posts()) {
                                 <?php endif; ?>
                                 <?php if ($link) : ?>
                                     <a href="<?php echo hta_esc_link($link); ?>" class="hta-event-link" <?php echo (0 === strpos($link, 'http')) ? 'target="_blank" rel="noopener noreferrer"' : ''; ?>>לפרטים והרשמה ←</a>
+                                <?php else : ?>
+                                    <span class="hta-event-closed">אירוע סגור</span>
                                 <?php endif; ?>
                             </div>
                         </div>

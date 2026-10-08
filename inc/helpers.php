@@ -454,6 +454,41 @@ function hta_event_banner_id(int $post_id): int
 }
 
 /**
+ * Display date (and time when stored) as defined on the event.
+ */
+function hta_event_date_label(int $post_id): string
+{
+    $datetime = trim(hta_meta($post_id, '_hta_datetime'));
+    $date     = trim(hta_meta($post_id, '_hta_date'));
+
+    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/', $datetime, $m)) {
+        return $m[3] . '/' . $m[2] . '/' . $m[1] . ' ' . $m[4] . ':' . $m[5];
+    }
+
+    $raw = $date !== '' ? $date : $datetime;
+    if (preg_match('/^(\d{4})-(\d{2})-(\d{2})/', $raw, $m)) {
+        return $m[3] . '/' . $m[2] . '/' . $m[1];
+    }
+
+    return '';
+}
+
+function hta_event_date_iso(int $post_id): string
+{
+    $datetime = trim(hta_meta($post_id, '_hta_datetime'));
+    if (preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/', $datetime)) {
+        return substr($datetime, 0, 16);
+    }
+
+    $date = trim(hta_meta($post_id, '_hta_date'));
+    if (preg_match('/^\d{4}-\d{2}-\d{2}/', $date)) {
+        return substr($date, 0, 10);
+    }
+
+    return '';
+}
+
+/**
  * Promoted banner events first, then by date ascending.
  *
  * @param WP_Post $a First event.
