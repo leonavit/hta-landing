@@ -11,7 +11,7 @@ $social_links = hta_footer_social_links();
     <div class="hta-footer-inner max-w-6xl mx-auto text-lg font-medium">
         <p class="hta-footer-copy"><?php echo esc_html(hta_mod('hta_footer_copy', '© 2026 איגוד ההיי-טק הישראלי. כל הזכויות שמורות.')); ?></p>
         <div class="hta-footer-assoc">
-            <img src="<?php echo esc_url(HTA_URI . '/assets/images/logo-manufacturers.png'); ?>" alt="Manufacturers' Association of Israel">
+            <img class="hta-footer-logo-manufacturers" src="<?php echo esc_url(HTA_URI . '/assets/images/logo-manufacturers.png'); ?>" alt="התאחדות התעשיינים בישראל">
             <img src="<?php echo esc_url(HTA_URI . '/assets/images/logo-hitech.png'); ?>" alt="Israeli High-Tech Association">
         </div>
         <div class="hta-footer-nav">

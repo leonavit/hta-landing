@@ -105,7 +105,7 @@ function hta_enqueue_assets(): void
     wp_localize_script('hta-theme', 'htaLanding', [
         'ajaxUrl'   => admin_url('admin-ajax.php'),
         'nonce'     => wp_create_nonce('hta_submit_event'),
-        'citiesUrl' => HTA_URI . '/assets/data/israel-cities.json',
+        'citiesUrl' => HTA_URI . '/assets/data/israel-cities.json?ver=' . HTA_VERSION,
         'i18n'      => [
             'sending'          => __('שולח...', 'hta-landing'),
             'success'          => __('ההגשה התקבלה ותעבור לסקירה.', 'hta-landing'),

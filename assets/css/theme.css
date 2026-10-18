@@ -1208,7 +1208,7 @@ section ol li,
     width: 100%;
     height: 100%;
     object-fit: contain;
-    object-position: center;
+    object-position: top;
 }
 
 @media (max-width: 767px) {
@@ -1263,6 +1263,10 @@ section ol li,
 .hta-media-card {
     transform-origin: center center;
     transition: border-color 0.25s ease;
+}
+
+.hta-topic-card,
+.hta-media-card {
     will-change: transform, opacity;
 }
 
@@ -1318,6 +1322,12 @@ section ol li,
     width: 30px;
     height: 30px;
     flex-shrink: 0;
+}
+
+.hta-event-city-icon lord-icon {
+    display: block;
+    width: 100%;
+    height: 100%;
 }
 
 .hta-event-city,
@@ -1696,6 +1706,11 @@ section ol li,
     width: auto;
     max-width: 13rem;
     object-fit: contain;
+}
+
+.hta-footer-assoc img.hta-footer-logo-manufacturers {
+    height: 5.5rem;
+    max-width: 28rem;
 }
 
 .hta-footer-links,
@@ -2091,6 +2106,13 @@ section ol li,
 
 .hta-section-title {
     font-size: var(--hta-font-section, 36px);
+}
+
+.hta-events-count {
+    color: cyan;
+    font-size: x-large;
+    direction: ltr;
+    unicode-bidi: isolate;
 }
 
 .hta-section-title,

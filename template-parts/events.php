@@ -8,7 +8,7 @@
 $terms  = get_terms(['taxonomy' => 'hta_event_cat', 'hide_empty' => false]);
 $events = new WP_Query([
     'post_type'      => 'hta_event',
-    'posts_per_page' => 50,
+    'posts_per_page' => -1,
     'post_status'    => 'publish',
     'orderby'        => 'meta_value',
     'meta_key'       => '_hta_date',
@@ -39,7 +39,7 @@ if ($events->have_posts()) {
 <section id="events-search" class="py-20 px-4 bg-slate-900/40 hta-rule-t scroll-mt-20">
     <div class="max-w-6xl mx-auto">
         <div class="text-center max-w-2xl mx-auto mb-10" data-reveal>
-            <h2 class="hta-section-title font-extrabold mb-3 text-white"><?php echo esc_html(hta_mod('hta_events_title', 'מנוע חיפוש אירועים')); ?></h2>
+            <h2 class="hta-section-title font-extrabold mb-3 text-white"><?php echo esc_html(hta_mod('hta_events_title', 'מנוע חיפוש אירועים')); ?> <span class="hta-events-count">(<?php echo esc_html(number_format_i18n((int) $events->found_posts)); ?>)</span></h2>
             <p class="text-slate-400 font-light"><?php echo esc_html(hta_mod('hta_events_subtitle', 'הקלידו מילת מפתח או בחרו קטגוריה כדי לסנן את האירועים בזמן אמת.')); ?></p>
         </div>
 
@@ -149,7 +149,9 @@ if ($events->have_posts()) {
                             if (has_post_thumbnail()) {
                                 $thumb_id = (int) get_post_thumbnail_id();
                                 the_post_thumbnail('hta-event', [
-                                    'alt' => hta_attachment_alt($thumb_id, get_the_title()),
+                                    'alt'      => hta_attachment_alt($thumb_id, get_the_title()),
+                                    'loading'  => 'lazy',
+                                    'decoding' => 'async',
                                 ]);
                             } else {
                                 ?>
@@ -178,17 +180,18 @@ if ($events->have_posts()) {
                             <div class="hta-event-foot pt-4 border-t border-slate-800 flex justify-between items-center text-slate-500">
                                 <?php if ($location) : ?>
                                     <span class="hta-event-city">
-                                        <lord-icon
+                                        <span
                                             class="hta-event-city-icon"
-                                            src="<?php echo esc_url(HTA_URI . '/assets/icons/' . ($is_online ? 'event-webinar.json' : 'event-location.json')); ?>"
-                                            trigger="<?php echo $is_online ? 'loop' : 'in'; ?>"
+                                            aria-hidden="true"
+                                            data-lord-src="<?php echo esc_url(HTA_URI . '/assets/icons/' . ($is_online ? 'event-webinar.json' : 'event-location.json')); ?>"
+                                            data-lord-trigger="<?php echo $is_online ? 'loop' : 'in'; ?>"
                                             <?php if ($is_online) : ?>
-                                                state="loop-roll"
-                                                colors="primary:#ebe6ef,secondary:#22d3ee"
+                                                data-lord-state="loop-roll"
+                                                data-lord-colors="primary:#ebe6ef,secondary:#22d3ee"
                                             <?php else : ?>
-                                                colors="primary:#22d3ee"
+                                                data-lord-colors="primary:#22d3ee"
                                             <?php endif; ?>
-                                        ></lord-icon>
+                                        ></span>
                                         <?php echo esc_html($location); ?>
                                     </span>
                                 <?php else : ?>

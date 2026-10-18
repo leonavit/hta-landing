@@ -314,6 +314,57 @@
         var showAll = pageSizeAttr === 'all';
         var pageSize = showAll ? Infinity : Math.max(1, parseInt(pageSizeAttr, 10) || 4);
         var visibleLimit = pageSize;
+        var refreshTimer = 0;
+
+        // Each lord-icon is a live Lottie player; mobile Safari kills the tab when dozens exist at once.
+        function mountEventIcon(slot) {
+            if (slot.firstChild) {
+                return;
+            }
+            var icon = document.createElement('lord-icon');
+            icon.setAttribute('src', slot.getAttribute('data-lord-src'));
+            ['trigger', 'state', 'colors'].forEach(function (name) {
+                var value = slot.getAttribute('data-lord-' + name);
+                if (value) {
+                    icon.setAttribute(name, value);
+                }
+            });
+            slot.appendChild(icon);
+        }
+
+        function unmountEventIcon(slot) {
+            while (slot.firstChild) {
+                slot.removeChild(slot.firstChild);
+            }
+        }
+
+        var iconSlots = eventsGrid.querySelectorAll('.hta-event-city-icon[data-lord-src]');
+        if ('IntersectionObserver' in window) {
+            var iconObserver = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        mountEventIcon(entry.target);
+                    } else {
+                        unmountEventIcon(entry.target);
+                    }
+                });
+            }, { rootMargin: '200px 0px' });
+            iconSlots.forEach(function (slot) {
+                iconObserver.observe(slot);
+            });
+        } else {
+            iconSlots.forEach(mountEventIcon);
+        }
+
+        function scheduleScrollRefresh() {
+            if (typeof ScrollTrigger === 'undefined') {
+                return;
+            }
+            window.clearTimeout(refreshTimer);
+            refreshTimer = window.setTimeout(function () {
+                ScrollTrigger.refresh();
+            }, 150);
+        }
 
         function matchesFilters(card) {
             if (card.getAttribute('data-promoted') === '1') {
@@ -362,6 +413,7 @@
         function resetAndRender() {
             visibleLimit = pageSize;
             renderEvents();
+            scheduleScrollRefresh();
         }
 
         searchInput.addEventListener('input', resetAndRender);
@@ -377,6 +429,7 @@
                 }
                 visibleLimit += pageSize;
                 renderEvents();
+                scheduleScrollRefresh();
             });
         }
 
@@ -1523,6 +1576,7 @@
             duration: 0.6,
             stagger: 0.15,
             ease: 'power2.out',
+            clearProps: 'transform,opacity',
             scrollTrigger: {
                 trigger: trigger,
                 start: 'top 80%'
@@ -1649,7 +1703,12 @@
 
     function initFadeUpSections() {
         fadeUpOnScroll(document.querySelector('.hta-topics-grid'), document.querySelectorAll('.hta-topic-card'));
-        fadeUpOnScroll(document.getElementById('eventsGrid'), document.querySelectorAll('.event-card'));
+        fadeUpOnScroll(
+            document.getElementById('eventsGrid'),
+            Array.prototype.filter.call(document.querySelectorAll('.event-card'), function (card) {
+                return card.style.display !== 'none';
+            })
+        );
         fadeUpOnScroll(document.querySelector('.hta-ambassadors-swiper'), document.querySelectorAll('.hta-ambassador-card'));
         fadeUpOnScroll(document.querySelector('.hta-media-swiper'), document.querySelectorAll('.hta-media-card'));
     }

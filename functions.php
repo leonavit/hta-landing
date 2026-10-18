@@ -9,7 +9,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-define('HTA_VERSION', '1.9.137');
+define('HTA_VERSION', '1.9.145');
 define('HTA_DIR', get_template_directory());
 
 require_once HTA_DIR . '/inc/helpers.php';
