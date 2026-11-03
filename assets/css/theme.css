@@ -793,6 +793,149 @@ section ol li,
     }
 }
 
+.hta-week-status {
+    margin: 0 auto 2.5rem;
+    max-width: 100%;
+    text-align: center;
+}
+
+.hta-week-status .hta-week-status-title {
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 auto 1.1rem;
+    font-size: clamp(1.5rem, 5vw, 2.25rem) !important;
+    font-weight: 500 !important;
+    line-height: 1.3;
+    background: linear-gradient(270deg, var(--hta-primary-1, #22d3ee) 0%, #c295e9 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+}
+
+.hta-week-days {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.6rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.hta-week-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.35rem;
+    padding: 0.85rem 0.5rem;
+    border: 1px solid rgb(51 65 85);
+    background: rgb(2 6 23 / 0.6);
+    color: rgb(203 213 225);
+}
+
+.hta-week-day-date {
+    font-family: 'Electrolize', 'Assistant', sans-serif !important;
+    font-size: clamp(1.1rem, 3.5vw, 1.5rem);
+    font-weight: 600;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    font-variant-numeric: tabular-nums;
+    color: #47d3ed;
+}
+
+.hta-week-day-title {
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.3;
+}
+
+.hta-week-day-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: auto;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.3;
+    border: 1px solid currentColor;
+}
+
+.hta-week-day.is-ended {
+    border-color: rgb(30 41 59);
+    color: rgb(100 116 139);
+}
+
+.hta-week-day.is-ended .hta-week-day-date {
+    color: rgb(100 116 139);
+}
+
+.hta-week-day.is-live {
+    position: relative;
+    overflow: hidden;
+    border-color: transparent;
+    background: linear-gradient(180deg, var(--hta-primary-1, #22d3ee) 0%, #c295e9 100%);
+    box-shadow: 0 4px 16px rgb(34 211 238 / 0.28);
+    color: #fff;
+}
+
+.hta-week-day.is-live > :not(.hta-particle-field) {
+    position: relative;
+    z-index: 1;
+}
+
+.hta-week-day.is-live .hta-week-day-date {
+    color: #fff;
+}
+
+.hta-week-day.is-live .hta-week-day-title {
+    font-weight: 600;
+}
+
+.hta-week-day.is-live .hta-week-day-status {
+    color: #080c1f;
+    background: #fff;
+    border-color: #fff;
+}
+
+.hta-week-day.is-live .hta-week-day-status::before {
+    content: '';
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 50% !important;
+    background: currentColor;
+    animation: hta-week-live-pulse 1.4s ease-in-out infinite;
+}
+
+.hta-week-day.is-soon .hta-week-day-status {
+    color: rgb(148 163 184);
+}
+
+@keyframes hta-week-live-pulse {
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.25;
+    }
+}
+
+@media (min-width: 768px) {
+    .hta-week-days {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 0.85rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hta-week-day.is-live .hta-week-day-status::before {
+        animation: none;
+    }
+}
+
 .hta-topics {
     position: relative;
     overflow: hidden;
@@ -1265,11 +1408,6 @@ section ol li,
     transition: border-color 0.25s ease;
 }
 
-.hta-topic-card,
-.hta-media-card {
-    will-change: transform, opacity;
-}
-
 .hta-event-cat {
     display: inline-block;
     border: 0;
@@ -1702,15 +1840,10 @@ section ol li,
 
 .hta-footer-assoc img {
     display: block;
-    height: 2.7rem;
+    height: 3.7rem;
     width: auto;
     max-width: 13rem;
     object-fit: contain;
-}
-
-.hta-footer-assoc img.hta-footer-logo-manufacturers {
-    height: 5.5rem;
-    max-width: 28rem;
 }
 
 .hta-footer-links,
@@ -2102,6 +2235,31 @@ section ol li,
 .hta-hero-subtitle {
     font-size: var(--hta-font-hero-text, 18px) !important;
     font-weight: var(--hta-weight-hero-text, 300) !important;
+}
+
+.hta-hero-assoc {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+}
+
+.hta-hero-assoc img {
+    display: block;
+    height: 4.5rem;
+    width: auto;
+    max-width: 45%;
+    object-fit: contain;
+}
+
+@media (max-width: 767px) {
+    .hta-hero-assoc {
+        gap: 1rem;
+    }
+
+    .hta-hero-assoc img {
+        height: 3.75rem;
+    }
 }
 
 .hta-section-title {

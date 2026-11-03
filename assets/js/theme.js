@@ -11,6 +11,7 @@
 
     onReady(function () {
         initMenu();
+        initAnchorJumps();
         initNavScroll();
         initScrollSpy();
         initEventFilter();
@@ -31,6 +32,7 @@
         initSectionRail();
         initSubmitForm();
         initSubmitCountdown();
+        initWeekStatus();
         initDatetimeField();
         // Carousels are heavy on mobile — defer so hero date/logo animations start first.
         deferCarousels();
@@ -218,6 +220,42 @@
                 setMenuOpen(false);
             });
         }
+    }
+
+    // A long smooth scroll on a phone paints every section on the way (dozens of event images and animations),
+    // which exhausts iOS Safari's memory; long in-page jumps on touch devices go straight to the target.
+    function initAnchorJumps() {
+        if (!window.matchMedia('(pointer: coarse)').matches) {
+            return;
+        }
+
+        document.addEventListener('click', function (event) {
+            if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey) {
+                return;
+            }
+            var link = event.target.closest ? event.target.closest('a[href^="#"]') : null;
+            var id = link ? link.getAttribute('href').slice(1) : '';
+            var target = id ? document.getElementById(id) : null;
+            if (!target) {
+                return;
+            }
+
+            var margin = parseFloat(window.getComputedStyle(target).scrollMarginTop) || 0;
+            var top = Math.max(0, target.getBoundingClientRect().top + window.scrollY - margin);
+            if (Math.abs(top - window.scrollY) < window.innerHeight * 2) {
+                return;
+            }
+
+            event.preventDefault();
+            var root = document.documentElement;
+            var previous = root.style.scrollBehavior;
+            root.style.scrollBehavior = 'auto';
+            window.scrollTo(0, top);
+            root.style.scrollBehavior = previous;
+            if (window.history && typeof window.history.pushState === 'function') {
+                window.history.pushState(null, '', '#' + id);
+            }
+        });
     }
 
     function initNavScroll() {
@@ -1701,14 +1739,44 @@
         });
     }
 
+    // A single staggered tween across dozens of cards keeps every pending card transformed for seconds,
+    // which exhausts iOS Safari's graphics memory; reveal cards only as they enter the viewport.
+    function revealEventCards() {
+        var cards = document.querySelectorAll('#eventsGrid .event-card');
+        if (!cards.length) {
+            return;
+        }
+        if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            return;
+        }
+
+        gsap.registerPlugin(ScrollTrigger);
+        gsap.set(cards, { opacity: 0 });
+        ScrollTrigger.batch(cards, {
+            start: 'top 92%',
+            once: true,
+            onEnter: function (batch, triggers) {
+                var velocity = triggers && triggers[0] ? Math.abs(triggers[0].getVelocity()) : 0;
+                if (velocity > 1500) {
+                    gsap.set(batch, { clearProps: 'transform,opacity' });
+                    return;
+                }
+                gsap.fromTo(batch, { opacity: 0, y: 40 }, {
+                    opacity: 1,
+                    y: 0,
+                    duration: 0.6,
+                    stagger: 0.12,
+                    ease: 'power2.out',
+                    overwrite: true,
+                    clearProps: 'transform,opacity'
+                });
+            }
+        });
+    }
+
     function initFadeUpSections() {
         fadeUpOnScroll(document.querySelector('.hta-topics-grid'), document.querySelectorAll('.hta-topic-card'));
-        fadeUpOnScroll(
-            document.getElementById('eventsGrid'),
-            Array.prototype.filter.call(document.querySelectorAll('.event-card'), function (card) {
-                return card.style.display !== 'none';
-            })
-        );
+        revealEventCards();
         fadeUpOnScroll(document.querySelector('.hta-ambassadors-swiper'), document.querySelectorAll('.hta-ambassador-card'));
         fadeUpOnScroll(document.querySelector('.hta-media-swiper'), document.querySelectorAll('.hta-media-card'));
     }
@@ -2042,8 +2110,24 @@
             values[unit].textContent = text;
         }
 
+        function hideCountdown() {
+            var wrap = root.closest('.hta-submit-countdown-wrap') || root;
+            var week = document.querySelector('.hta-week-status');
+            wrap.hidden = true;
+            if (week) {
+                week.hidden = false;
+            }
+            if (typeof ScrollTrigger !== 'undefined') {
+                ScrollTrigger.refresh();
+            }
+        }
+
         function render() {
             var diff = Math.max(0, target - Date.now());
+            if (diff === 0) {
+                hideCountdown();
+                return;
+            }
             var ms = diff % 1000;
             var totalSeconds = Math.floor(diff / 1000);
             var seconds = totalSeconds % 60;
@@ -2063,6 +2147,92 @@
         }
 
         window.requestAnimationFrame(render);
+    }
+
+    // Statuses are recomputed client-side so cached pages stay correct and roll over at midnight.
+    function initWeekStatus() {
+        var root = document.querySelector('.hta-week-status');
+        if (!root) {
+            return;
+        }
+
+        var days = Array.prototype.slice.call(root.querySelectorAll('.hta-week-day'));
+        var title = root.querySelector('.hta-week-status-title');
+        var tz = root.getAttribute('data-tz') || 'Asia/Jerusalem';
+        var liveParticles = null;
+
+        function setLiveParticles(day) {
+            if (liveParticles && liveParticles.day === day) {
+                return;
+            }
+            if (liveParticles) {
+                liveParticles.tweens.forEach(function (tween) {
+                    tween.kill();
+                });
+                liveParticles.field.remove();
+                liveParticles = null;
+            }
+            if (!day) {
+                return;
+            }
+            var field = document.createElement('span');
+            field.className = 'hta-particle-field hta-particle-field--btn';
+            field.setAttribute('aria-hidden', 'true');
+            day.insertBefore(field, day.firstChild);
+            liveParticles = {
+                day: day,
+                field: field,
+                tweens: initParticleFloatField(field, { variant: 'white', count: 14 })
+            };
+        }
+
+        function today() {
+            try {
+                return new Intl.DateTimeFormat('en-CA', {
+                    timeZone: tz,
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                }).format(new Date());
+            } catch (err) {
+                var d = new Date();
+                return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            }
+        }
+
+        function apply() {
+            var now = today();
+            var allEnded = true;
+            var liveDay = null;
+            days.forEach(function (day) {
+                var date = day.getAttribute('data-date');
+                var status = date < now ? 'ended' : (date === now ? 'live' : 'soon');
+                if (status !== 'ended') {
+                    allEnded = false;
+                }
+                if (status === 'live') {
+                    liveDay = day;
+                }
+                day.classList.remove('is-ended', 'is-live', 'is-soon');
+                day.classList.add('is-' + status);
+                if (status === 'live') {
+                    day.setAttribute('aria-current', 'date');
+                } else {
+                    day.removeAttribute('aria-current');
+                }
+                var label = day.querySelector('.hta-week-day-status');
+                if (label) {
+                    label.textContent = root.getAttribute('data-label-' + status) || label.textContent;
+                }
+            });
+            if (title) {
+                title.textContent = root.getAttribute(allEnded ? 'data-title-ended' : 'data-title-live') || title.textContent;
+            }
+            setLiveParticles(liveDay);
+        }
+
+        apply();
+        window.setInterval(apply, 60000);
     }
 
     function initDatetimeField() {

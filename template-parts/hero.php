@@ -44,6 +44,10 @@ $video    = hta_hero_video();
         <p class="hta-hero-subtitle text-slate-300 mt-4 max-w-2xl mx-auto">
             <?php echo esc_html(hta_mod('hta_hero_subtitle', 'שישה ימים . שישה עולמות תוכן . מאות אירועים. סיפור אחד של ההיי-טק הישראלי')); ?>
         </p>
+        <div class="hta-hero-assoc mt-6">
+            <img src="<?php echo esc_url(HTA_URI . '/assets/images/logo-manufacturers.png'); ?>" alt="התאחדות התעשיינים בישראל" width="678" height="295" decoding="async">
+            <img src="<?php echo esc_url(HTA_URI . '/assets/images/logo-hitech.png'); ?>" alt="איגוד ההיי-טק הישראלי" width="613" height="283" decoding="async">
+        </div>
         <div class="hta-hero-ctas mt-8 flex flex-row gap-3 sm:gap-4 justify-center items-stretch">
             <a href="#events-search" class="hta-btn flex-1 sm:flex-none px-4 sm:px-8 py-3.5 text-center"><?php echo esc_html(hta_mod('hta_hero_cta_primary', 'חיפוש אירועים בשבוע')); ?></a>
             <a href="#submit-event-form" class="hta-btn-secondary flex-1 sm:flex-none px-4 sm:px-8 py-3.5 text-center"><?php echo esc_html(hta_mod('hta_hero_cta_secondary', 'הגשת אירוע משלכם')); ?></a>

@@ -489,6 +489,46 @@ function hta_event_date_iso(int $post_id): string
 }
 
 /**
+ * The six week days from the topics settings, falling back to consecutive days from the week start.
+ *
+ * @return list<array{date:string,label:string,title:string}>
+ */
+function hta_week_days(DateTimeImmutable $week_start): array
+{
+    $tz   = wp_timezone();
+    $days = [];
+
+    for ($i = 1; $i <= 6; $i++) {
+        $badge = trim((string) hta_mod("hta_topic_{$i}_badge", ''));
+        if (false !== strpos($badge, '|')) {
+            $badge = trim(explode('|', $badge, 2)[0]);
+        }
+
+        $date = $badge ? DateTimeImmutable::createFromFormat('!d.m.Y', $badge, $tz) : false;
+        if (! $date) {
+            $date = $week_start->setTimezone($tz)->setTime(0, 0)->modify('+' . ($i - 1) . ' days');
+        }
+
+        $days[] = [
+            'date'  => $date->format('Y-m-d'),
+            'label' => $date->format('d/m'),
+            'title' => trim((string) hta_mod("hta_topic_{$i}_title", '')),
+        ];
+    }
+
+    return $days;
+}
+
+function hta_week_day_status(string $date, string $today): string
+{
+    if ($date < $today) {
+        return 'ended';
+    }
+
+    return $date === $today ? 'live' : 'soon';
+}
+
+/**
  * Promoted banner events first, then by date ascending.
  *
  * @param WP_Post $a First event.

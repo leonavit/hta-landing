@@ -1,13 +1,32 @@
 <?php
 /**
- * Submit section countdown.
+ * Submit section countdown, replaced by the week's daily status once the week starts.
  *
  * @package HTA_Landing
  */
 
 $target = hta_mod('hta_submit_countdown', '2026-11-01T00:00:00');
 $title  = hta_mod('hta_submit_countdown_title', 'האירועים יתחילו בעוד:');
+
+try {
+    $target_time = new DateTimeImmutable((string) $target, wp_timezone());
+} catch (Exception $e) {
+    $target_time = new DateTimeImmutable('now', wp_timezone());
+}
+
+$started  = $target_time->getTimestamp() <= time();
+$today    = wp_date('Y-m-d');
+$days     = hta_week_days($target_time);
+$statuses = [
+    'ended' => __('הסתיים', 'hta-landing'),
+    'live'  => __('מתקיים', 'hta-landing'),
+    'soon'  => __('בקרוב', 'hta-landing'),
+];
+$title_live  = __('שבוע ההיי-טק מתקיים עכשיו', 'hta-landing');
+$title_ended = __('שבוע ההיי-טק הסתיים', 'hta-landing');
+$all_ended   = end($days)['date'] < $today;
 ?>
+<?php if (! $started) : ?>
 <div class="hta-submit-countdown-wrap">
     <p class="hta-submit-countdown-title"><?php echo esc_html($title); ?></p>
     <div
@@ -37,4 +56,29 @@ $title  = hta_mod('hta_submit_countdown_title', 'האירועים יתחילו �
         <span class="hta-countdown-label">ימים</span>
     </div>
     </div>
+</div>
+<?php endif; ?>
+<div
+    class="hta-week-status"
+    data-tz="<?php echo esc_attr(wp_timezone_string()); ?>"
+    data-title-live="<?php echo esc_attr($title_live); ?>"
+    data-title-ended="<?php echo esc_attr($title_ended); ?>"
+    data-label-ended="<?php echo esc_attr($statuses['ended']); ?>"
+    data-label-live="<?php echo esc_attr($statuses['live']); ?>"
+    data-label-soon="<?php echo esc_attr($statuses['soon']); ?>"
+    <?php echo $started ? '' : 'hidden'; ?>
+>
+    <p class="hta-submit-countdown-title hta-week-status-title"><?php echo esc_html($all_ended ? $title_ended : $title_live); ?></p>
+    <ol class="hta-week-days">
+        <?php foreach ($days as $day) : ?>
+            <?php $status = hta_week_day_status($day['date'], $today); ?>
+            <li class="hta-week-day is-<?php echo esc_attr($status); ?>" data-date="<?php echo esc_attr($day['date']); ?>"<?php echo 'live' === $status ? ' aria-current="date"' : ''; ?>>
+                <span class="hta-week-day-date hta-bidi-ltr" dir="ltr"><?php echo esc_html($day['label']); ?></span>
+                <?php if ($day['title']) : ?>
+                    <span class="hta-week-day-title"><?php echo esc_html($day['title']); ?></span>
+                <?php endif; ?>
+                <span class="hta-week-day-status"><?php echo esc_html($statuses[ $status ]); ?></span>
+            </li>
+        <?php endforeach; ?>
+    </ol>
 </div>

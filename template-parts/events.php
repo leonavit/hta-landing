@@ -86,6 +86,13 @@ if ($events->have_posts()) {
             data-page-size="<?php echo esc_attr($page_size); ?>"
         >
             <?php if ($events->have_posts()) : ?>
+                <?php
+                // Full-size srcset candidates get picked on 3x phones and decoding dozens of them crashes iOS Safari.
+                $hta_card_srcset_cap = static function (): int {
+                    return 800;
+                };
+                add_filter('max_srcset_image_width', $hta_card_srcset_cap);
+                ?>
                 <?php while ($events->have_posts()) : $events->the_post(); ?>
                     <?php
                     $id       = get_the_ID();
@@ -207,6 +214,7 @@ if ($events->have_posts()) {
                     </article>
                     <?php endif; ?>
                 <?php endwhile; ?>
+                <?php remove_filter('max_srcset_image_width', $hta_card_srcset_cap); ?>
                 <?php wp_reset_postdata(); ?>
             <?php endif; ?>
         </div>
